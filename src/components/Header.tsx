@@ -1,4 +1,5 @@
 import type { HandSize } from '../lib/types';
+import { InstallControl } from './InstallControl';
 
 interface Props {
   handSize: HandSize;
@@ -18,6 +19,7 @@ export function Header({ handSize, canUndo, onHandSize, onUndo, onReset }: Props
         <span className="subtitle">hints on the back</span>
       </div>
       <div className="controls">
+        <InstallControl />
         <div className="segment" role="group" aria-label="Hand size">
           {([4, 5] as HandSize[]).map((n) => (
             <button

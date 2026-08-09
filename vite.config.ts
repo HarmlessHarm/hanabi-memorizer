@@ -17,6 +17,7 @@ export default defineConfig({
       // NFR-4: the app must work offline after first load. Workbox precaches the
       // built app shell; there is no runtime network dependency to configure.
       manifest: {
+        id: '/',
         name: 'Hanabi — hint tracker',
         short_name: 'Hanabi',
         description:
