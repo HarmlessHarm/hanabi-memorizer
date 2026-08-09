@@ -9,11 +9,10 @@ import { DiscardConfirm } from './components/DiscardConfirm';
 export default function App() {
   const hand = useHand();
 
-  // Transient UI state — which card's sheet is open, which card is pending
-  // discard confirmation, and a counter to re-play the numeral pop on each hint.
+  // Transient UI state — which card's sheet is open, and which card is pending
+  // discard confirmation. The numeral pop is owned by the card it belongs to.
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [leavingId, setLeavingId] = useState<number | null>(null);
-  const [pop, setPop] = useState(0);
 
   const selected = hand.cards.find((c) => c.id === selectedId) ?? null;
   const selectedIndex = hand.cards.findIndex((c) => c.id === selectedId);
@@ -21,7 +20,6 @@ export default function App() {
   const toggleHint = (field: 'rank' | 'suit', value: Rank | SuitKey) => {
     if (selectedId === null) return;
     hand.toggleHint(selectedId, field, value);
-    setPop((n) => n + 1);
   };
 
   const undo = () => {
@@ -55,7 +53,6 @@ export default function App() {
         handSize={hand.handSize}
         selectedId={selectedId}
         leavingId={leavingId}
-        pop={pop}
         onTap={setSelectedId}
         onDiscardIntent={setLeavingId}
         onReorder={hand.reorder}

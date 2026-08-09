@@ -45,6 +45,30 @@ npm run build   # type-check + production build to dist/
 npm run preview # serve the production build locally
 ```
 
+## Test
+
+```bash
+npx playwright install chromium   # one-off, downloads the browser
+npm test                          # starts the dev server itself and runs both projects
+npm test -- --project=phone       # touch only
+npm test -- --headed --debug      # watch it happen / step through
+npm run test:report               # open the HTML report after a failure
+```
+
+[Playwright](https://playwright.dev/) end-to-end tests in [`tests/`](./tests/), split
+into a **phone** project (Pixel 7 emulation, real touch input) and a **desktop**
+project (mouse).
+
+The split is the point. Both bugs this app has actually shipped were browser
+behaviours that are invisible with a mouse on a desktop and that reading the code
+does not reveal — a touchscreen replaying every tap as a phantom mouse click a few
+ms later, and a finished CSS animation restarting whenever the browser re-inserts
+its node. Neither is reachable by unit-testing a component, so the tests drive a
+real engine with real touch events and assert on what it does: whether the sheet is
+still open, and which numerals fired their `animationstart`. Anything added here
+should be checked to fail against the code from before the fix — a test for a
+browser quirk is very easy to write so that it passes for the wrong reason.
+
 ## Deploy
 
 Hosted on Vercel as a static SPA (`vercel.json` sets the Vite framework preset).

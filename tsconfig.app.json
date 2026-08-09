@@ -16,7 +16,11 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    // The app runs in a browser; @types/node is a test-only dependency and must
+    // not leak node globals into its scope.
+    "types": []
   },
   "include": ["src"]
 }

@@ -31,4 +31,9 @@ pnpm-debug.log*
 # PWA dev artifacts
 dev-dist/
 
+# playwright
+test-results/
+playwright-report/
+blob-report/
+
 .vercel

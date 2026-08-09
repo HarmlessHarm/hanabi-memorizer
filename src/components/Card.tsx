@@ -1,5 +1,6 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
-import type { Card as CardModel } from '../lib/types';
+import type { Card as CardModel, Rank } from '../lib/types';
 import { cardBackground, suitOf } from '../lib/suits';
 import type { CardPointerProps } from '../hooks/useHandDrag';
 import { Burst } from './Burst';
@@ -12,14 +13,43 @@ interface Props {
   transform: CSSProperties;
   dimmed: boolean;
   focus: boolean;
-  /** bumped on every hint change so the numeral re-plays its pop (ux-design.md) */
-  pop: number;
+}
+
+/**
+ * A token that changes each time *this* card's number changes and clears again
+ * once the pop has played, so the numeral only carries `is-pop` while it is
+ * actually animating.
+ *
+ * Both halves matter. Per-card, because motion confirms the action that just
+ * landed (ux-design.md) — a hint placed on one card must not set every numeral
+ * on the table animating. Transient, because a finished CSS animation replays
+ * whenever the browser re-inserts the node, and re-inserting nodes is exactly
+ * how a reorder moves cards around: a numeral that always carries the class
+ * pops again every time its card, or a card shuffling past it, changes place.
+ */
+function usePop(rank: Rank | null): [number | null, () => void] {
+  const [pop, setPop] = useState<number | null>(null);
+  const seq = useRef(0);
+  const prev = useRef(rank);
+
+  useEffect(() => {
+    const changed = rank !== prev.current;
+    prev.current = rank;
+    // Nothing to confirm when the number is cleared, and a number restored from
+    // storage on load was not an action taken just now.
+    if (!changed || rank === null) return;
+    seq.current += 1;
+    setPop(seq.current);
+  }, [rank]);
+
+  return [pop, useCallback(() => setPop(null), [])];
 }
 
 // A card back IS the hint (DEC-6): the color hint floods the whole card, the
 // number hint is one oversized centred numeral. No hints -> a neutral dark back.
-export function Card({ card, cardW, cardH, pointerProps, transform, dimmed, focus, pop }: Props) {
+export function Card({ card, cardW, cardH, pointerProps, transform, dimmed, focus }: Props) {
   const suit = suitOf(card.suit);
+  const [pop, popPlayed] = usePop(card.rank);
   const style: CSSProperties = {
     ...transform,
     width: cardW,
@@ -38,8 +68,11 @@ export function Card({ card, cardW, cardH, pointerProps, transform, dimmed, focu
       <Burst tint={suit ? suit.ink : '#c9d2dd'} />
       {card.rank && (
         <span
-          key={`${card.rank}-${pop}`}
-          className="rank is-pop"
+          // A fresh token remounts the numeral, which restarts the animation
+          // even when a second hint lands before the first pop has finished.
+          key={pop ?? 'idle'}
+          className={pop === null ? 'rank' : 'rank is-pop'}
+          onAnimationEnd={popPlayed}
           style={{
             fontSize: cardH * 0.46,
             color: suit ? suit.ink : '#ffffff',
