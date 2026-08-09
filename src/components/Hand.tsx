@@ -10,7 +10,6 @@ interface Props {
   handSize: HandSize;
   selectedId: number | null;
   leavingId: number | null;
-  pop: number;
   onTap: (id: number) => void;
   onDiscardIntent: (id: number) => void;
   onReorder: (from: number, to: number) => void;
@@ -24,7 +23,6 @@ export function Hand({
   handSize,
   selectedId,
   leavingId,
-  pop,
   onTap,
   onDiscardIntent,
   onReorder,
@@ -80,7 +78,6 @@ export function Hand({
               transform={drag.transformFor(i)}
               dimmed={dimmed}
               focus={focus}
-              pop={pop}
             />
           );
         })}
