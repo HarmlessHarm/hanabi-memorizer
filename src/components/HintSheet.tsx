@@ -1,6 +1,7 @@
 import type { Card } from '../lib/types';
 import type { Rank, SuitKey } from '../lib/types';
 import { RANKS, SUITS, suitOf } from '../lib/suits';
+import { Sheet } from './Sheet';
 
 interface Props {
   card: Card;
@@ -21,66 +22,64 @@ export function HintSheet({ card, index, onToggle, onClear, onClose }: Props) {
       : 'No hints yet';
 
   return (
-    <div className="scrim" onClick={onClose}>
-      <div className="sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="sheet-head">
-          <div>
-            <div className="sheet-eyebrow">Card {index + 1} from the left</div>
-            <div className="sheet-title">{summary}</div>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="close" onClick={onClear}>
-              Clear
-            </button>
-            <button className="close is-main" onClick={onClose}>
-              Done
-            </button>
+    <Sheet onDismiss={onClose}>
+      <div className="sheet-head">
+        <div>
+          <div className="sheet-eyebrow">Card {index + 1} from the left</div>
+          <div className="sheet-title">{summary}</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="close" onClick={onClear}>
+            Clear
+          </button>
+          <button className="close is-main" onClick={onClose}>
+            Done
+          </button>
+        </div>
+      </div>
+
+      <div className="groups">
+        <div className="group">
+          <div className="group-label">Number</div>
+          <div className="pick-row">
+            {RANKS.map((n) => (
+              <button
+                key={n}
+                className={`pick${card.rank === n ? ' is-on' : ''}`}
+                aria-pressed={card.rank === n}
+                onClick={() => onToggle('rank', n)}
+              >
+                {n}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="groups">
-          <div className="group">
-            <div className="group-label">Number</div>
-            <div className="pick-row">
-              {RANKS.map((n) => (
-                <button
-                  key={n}
-                  className={`pick${card.rank === n ? ' is-on' : ''}`}
-                  aria-pressed={card.rank === n}
-                  onClick={() => onToggle('rank', n)}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="group">
-            <div className="group-label">Color</div>
-            <div className="pick-row">
-              {SUITS.map((s) => (
-                <button
-                  key={s.key}
-                  className="swatch"
-                  aria-label={s.label}
-                  aria-pressed={card.suit === s.key}
-                  onClick={() => onToggle('suit', s.key)}
-                  style={{
-                    background: s.hex,
-                    color: s.ink,
-                    boxShadow:
-                      card.suit === s.key
-                        ? `0 0 0 3px #12161c, 0 0 0 6px ${s.hi}`
-                        : '0 2px 6px rgba(0,0,0,.4)',
-                  }}
-                >
-                  {card.suit === s.key ? '✓' : ''}
-                </button>
-              ))}
-            </div>
+        <div className="group">
+          <div className="group-label">Color</div>
+          <div className="pick-row">
+            {SUITS.map((s) => (
+              <button
+                key={s.key}
+                className="swatch"
+                aria-label={s.label}
+                aria-pressed={card.suit === s.key}
+                onClick={() => onToggle('suit', s.key)}
+                style={{
+                  background: s.hex,
+                  color: s.ink,
+                  boxShadow:
+                    card.suit === s.key
+                      ? `0 0 0 3px #12161c, 0 0 0 6px ${s.hi}`
+                      : '0 2px 6px rgba(0,0,0,.4)',
+                }}
+              >
+                {card.suit === s.key ? '✓' : ''}
+              </button>
+            ))}
           </div>
         </div>
       </div>
-    </div>
+    </Sheet>
   );
 }

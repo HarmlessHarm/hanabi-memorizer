@@ -2,9 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { Card } from '../lib/types';
 import type { Metrics } from '../lib/layout';
-import { DRAG_THRESHOLD, LIFT } from '../lib/layout';
+import { DRAG_THRESHOLD, LIFT, TOUCH_DRAG_THRESHOLD } from '../lib/layout';
 
 interface DragRef {
+  pointerId: number;
+  /** px of travel this pointer is allowed before the gesture stops being a tap */
+  slop: number;
   i: number;
   to: number;
   x0: number;
@@ -34,7 +37,8 @@ export interface CardPointerProps {
   onPointerDown: (e: React.PointerEvent) => void;
   onPointerMove: (e: React.PointerEvent) => void;
   onPointerUp: (e: React.PointerEvent) => void;
-  onPointerCancel: () => void;
+  onPointerCancel: (e: React.PointerEvent) => void;
+  onTouchEnd: (e: React.TouchEvent) => void;
 }
 
 export interface HandDragApi {
@@ -77,7 +81,20 @@ export function useHandDrag({
   const onDown = useCallback(
     (e: React.PointerEvent, i: number) => {
       if (!enabled) return;
-      dragRef.current = { i, to: i, x0: e.clientX, y0: e.clientY, moved: false, out: false };
+      // Right/middle mouse buttons and second fingers must not hijack a gesture:
+      // only a primary press owns the hand.
+      if (e.button !== 0 || !e.isPrimary) return;
+      if (dragRef.current) return;
+      dragRef.current = {
+        pointerId: e.pointerId,
+        slop: e.pointerType === 'mouse' ? DRAG_THRESHOLD : TOUCH_DRAG_THRESHOLD,
+        i,
+        to: i,
+        x0: e.clientX,
+        y0: e.clientY,
+        moved: false,
+        out: false,
+      };
       try {
         (e.currentTarget as Element).setPointerCapture(e.pointerId);
       } catch {
@@ -90,10 +107,10 @@ export function useHandDrag({
   const onMove = useCallback(
     (e: React.PointerEvent) => {
       const d = dragRef.current;
-      if (!d) return;
+      if (!d || e.pointerId !== d.pointerId) return;
       const dx = e.clientX - d.x0;
       const dy = e.clientY - d.y0;
-      if (!d.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      if (!d.moved && Math.hypot(dx, dy) < d.slop) return;
       d.moved = true;
       d.out = dy < -cardH * LIFT;
       const n = cardsRef.current.length;
@@ -115,11 +132,11 @@ export function useHandDrag({
   );
 
   const onUp = useCallback(
-    (_e: React.PointerEvent, i: number) => {
+    (e: React.PointerEvent, i: number) => {
       const d = dragRef.current;
+      if (!d || e.pointerId !== d.pointerId) return;
       dragRef.current = null;
       setDrag(null);
-      if (!d) return;
       if (!d.moved) {
         onTap(cardsRef.current[i].id);
         return;
@@ -133,9 +150,22 @@ export function useHandDrag({
     [finishReorder, onDiscardIntent, onTap],
   );
 
-  const onCancel = useCallback(() => {
+  const onCancel = useCallback((e: React.PointerEvent) => {
+    const d = dragRef.current;
+    if (!d || e.pointerId !== d.pointerId) return;
     dragRef.current = null;
     setDrag(null);
+  }, []);
+
+  // A touchscreen replays every tap as a phantom mouse sequence (mousedown,
+  // mouseup, click) a few ms after touchend, hit-tested against whatever sits
+  // under the finger *by then* — which, for a tap that opens a sheet, is the
+  // sheet's own backdrop. Left alone that click closes the sheet the tap just
+  // opened, so a tap looks like it did nothing while a slow press (too long to
+  // count as a tap, so no phantom click) works. The pointer handlers above have
+  // already done the work; cancelling touchend suppresses the replay entirely.
+  const onTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (e.cancelable) e.preventDefault();
   }, []);
 
   const getCardProps = useCallback(
@@ -144,8 +174,9 @@ export function useHandDrag({
       onPointerMove: onMove,
       onPointerUp: (e) => onUp(e, i),
       onPointerCancel: onCancel,
+      onTouchEnd,
     }),
-    [onCancel, onDown, onMove, onUp],
+    [onCancel, onDown, onMove, onTouchEnd, onUp],
   );
 
   const transformFor = useCallback(
