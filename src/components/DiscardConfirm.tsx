@@ -1,3 +1,5 @@
+import { Sheet } from './Sheet';
+
 interface Props {
   onKeep: () => void;
   onDiscard: () => void;
@@ -7,18 +9,16 @@ interface Props {
 // accidental discard is unrecoverable at the table without Undo.
 export function DiscardConfirm({ onKeep, onDiscard }: Props) {
   return (
-    <div className="scrim" onClick={onKeep}>
-      <div className="sheet chooser" onClick={(e) => e.stopPropagation()}>
-        <div className="chooser-title">Discard this card?</div>
-        <div className="actions">
-          <button className="action action-ghost" onClick={onKeep}>
-            Keep it
-          </button>
-          <button className="action action-discard" onClick={onDiscard}>
-            Discard
-          </button>
-        </div>
+    <Sheet onDismiss={onKeep} variant="chooser">
+      <div className="chooser-title">Discard this card?</div>
+      <div className="actions">
+        <button className="action action-ghost" onClick={onKeep}>
+          Keep it
+        </button>
+        <button className="action action-discard" onClick={onDiscard}>
+          Discard
+        </button>
       </div>
-    </div>
+    </Sheet>
   );
 }
