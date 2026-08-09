@@ -1,0 +1,422 @@
+/* Self-hosted so the app's key glyphs — the numerals — survive offline (NFR-4).
+   Space Grotesk is a variable font; this one file covers the weights we use. */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/space-grotesk-latin.woff2') format('woff2');
+}
+
+:root {
+  --font: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --bg-0: #0d1014;
+  --bg-1: #1b2029;
+  --panel: #12161c;
+  --panel-2: #1a1f27;
+  --ink: #e7ecf2;
+  --ink-dim: #c3ccd8;
+  --ink-mute: #7f8a99;
+  --ink-faint: #5c6672;
+  --hairline: rgba(255, 255, 255, 0.08);
+  --danger: #ff5c5c;
+
+  --gap: 10px;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg-0);
+  color: var(--ink);
+  font-family: var(--font);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 2px solid #edc23a;
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------- app */
+
+.app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: radial-gradient(120% 80% at 50% 0%, var(--bg-1) 0%, var(--bg-0) 70%);
+  color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+  padding-top: env(safe-area-inset-top);
+}
+
+/* -------------------------------------------------------------- header */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 6px;
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.wordmark {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: var(--ink-mute);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.segment {
+  display: flex;
+  background: var(--panel-2);
+  border-radius: 10px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.seg-btn {
+  width: 30px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--ink-mute);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.seg-btn.is-on {
+  background: #2c3441;
+  color: var(--ink);
+}
+
+.chip {
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  color: var(--ink-dim);
+  border: 1px solid var(--hairline);
+  font-size: 14px;
+}
+
+.chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* --------------------------------------------------------------- stage */
+
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 6px 12px 14px;
+}
+
+.zone {
+  width: 94%;
+  max-width: 620px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  border: 2px dashed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.zone-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  transition: color 160ms ease;
+}
+
+.row {
+  display: flex;
+  gap: var(--gap);
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+/* ---------------------------------------------------------------- card */
+
+.card {
+  position: relative;
+  flex-shrink: 0;
+  touch-action: none; /* dragging never scrolls the page (REQ-5.2) */
+  overflow: hidden;
+  transition: transform 170ms cubic-bezier(0.2, 0.8, 0.3, 1), opacity 160ms ease,
+    margin-top 160ms ease, box-shadow 200ms ease;
+}
+
+.rank {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: 700;
+  line-height: 1;
+  z-index: 2;
+}
+
+.rank.is-pop {
+  animation: pop 220ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.burst {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.16;
+}
+
+.slot {
+  flex-shrink: 0;
+  border-radius: 14px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: #8b95a3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.slot:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.slot-label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+/* -------------------------------------------------------- sheets/modals */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 8, 11, 0.65);
+  display: flex;
+  align-items: flex-end;
+  z-index: 50;
+}
+
+.sheet {
+  width: 100%;
+  background: var(--panel);
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 20px 20px 0 0;
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
+  box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.5);
+  animation: rise 200ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.sheet-eyebrow {
+  font-size: 11px;
+  color: var(--ink-mute);
+  letter-spacing: 0.12em;
+}
+
+.sheet-title {
+  font-size: 18px;
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+.close {
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 10px;
+  background: #222932;
+  color: var(--ink-dim);
+  border: none;
+  font-size: 14px;
+}
+
+.close.is-main {
+  background: #2f3a49;
+  color: var(--ink);
+}
+
+.groups {
+  display: flex;
+  flex-direction: column;
+}
+
+.group {
+  margin-bottom: 12px;
+}
+
+.group-label {
+  font-size: 11px;
+  color: var(--ink-mute);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+
+.pick-row {
+  display: flex;
+  gap: 10px;
+}
+
+.pick {
+  flex: 1;
+  height: 52px;
+  border-radius: 12px;
+  background: #1c222b;
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.pick.is-on {
+  background: #0b0d10;
+  color: #ffffff;
+  font-weight: 700;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+}
+
+.swatch {
+  flex: 1;
+  height: 52px;
+  border-radius: 12px;
+  border: none;
+  font-size: 20px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.chooser {
+  padding-top: 16px;
+}
+
+.chooser-title {
+  font-size: 15px;
+  color: var(--ink-dim);
+  margin-bottom: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action {
+  flex: 1;
+  height: 48px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 500;
+}
+
+.action-ghost {
+  background: transparent;
+  color: #9aa4b1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.action-discard {
+  background: #3a1e22;
+  color: #ef8c8c;
+  border: 1px solid #6a3038;
+}
+
+/* -------------------------------------------------------------- motion */
+
+@keyframes pop {
+  from {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* On short/landscape screens lay the two hint groups side by side. */
+@media (max-height: 520px) {
+  .groups {
+    flex-direction: row;
+    gap: 18px;
+  }
+  .groups > .group {
+    flex: 1;
+    margin-bottom: 4px;
+  }
+}
+
+/* Motion is feedback, never the only signal (NFR-6). */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .rank,
+  .sheet {
+    animation: none !important;
+    transition: none !important;
+  }
+}
