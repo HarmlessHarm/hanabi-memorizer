@@ -407,12 +407,6 @@ button:focus-visible {
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.action-discard {
-  background: #3a1e22;
-  color: #ef8c8c;
-  border: 1px solid #6a3038;
-}
-
 /* -------------------------------------------------------------- motion */
 
 @keyframes pop {

@@ -9,9 +9,8 @@ interface Props {
   cards: CardModel[];
   handSize: HandSize;
   selectedId: number | null;
-  leavingId: number | null;
   onTap: (id: number) => void;
-  onDiscardIntent: (id: number) => void;
+  onDiscard: (id: number) => void;
   onReorder: (from: number, to: number) => void;
   onDraw: () => void;
 }
@@ -22,9 +21,8 @@ export function Hand({
   cards,
   handSize,
   selectedId,
-  leavingId,
   onTap,
-  onDiscardIntent,
+  onDiscard,
   onReorder,
   onDraw,
 }: Props) {
@@ -35,10 +33,10 @@ export function Hand({
     cards,
     metrics,
     // Freeze dragging while a sheet is open, so a modal tap can't start a drag.
-    enabled: selectedId === null && leavingId === null,
+    enabled: selectedId === null,
     onTap,
     onReorder,
-    onDiscardIntent,
+    onDiscard,
   });
 
   const { cardW, cardH, zoneH } = metrics;
@@ -64,10 +62,8 @@ export function Hand({
         ))}
 
         {cards.map((c, i) => {
-          const dimmed =
-            (selectedId !== null && c.id !== selectedId) ||
-            (leavingId !== null && c.id !== leavingId);
-          const focus = c.id === selectedId || c.id === leavingId;
+          const dimmed = selectedId !== null && c.id !== selectedId;
+          const focus = c.id === selectedId;
           return (
             <Card
               key={c.id}
