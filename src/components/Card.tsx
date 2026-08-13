@@ -1,18 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { usePress } from '@react-aria/interactions';
+import { mergeProps } from '@react-aria/utils';
 import type { Card as CardModel, Rank } from '../lib/types';
 import { cardBackground, suitOf } from '../lib/suits';
-import type { CardPointerProps } from '../hooks/useHandDrag';
+import type { HandDragApi } from '../hooks/useHandDrag';
 import { Burst } from './Burst';
 
 interface Props {
   card: CardModel;
+  /** 0-based position in the hand, for the "Card N from the left" label */
+  index: number;
   cardW: number;
   cardH: number;
-  pointerProps: CardPointerProps;
+  drag: HandDragApi;
   transform: CSSProperties;
   dimmed: boolean;
   focus: boolean;
+  /** taps are frozen while a sheet is open, so a modal tap can't reach a card */
+  tappable: boolean;
+  onTap: (id: number) => void;
 }
 
 /**
@@ -45,11 +52,43 @@ function usePop(rank: Rank | null): [number | null, () => void] {
   return [pop, useCallback(() => setPop(null), [])];
 }
 
+/** What a screen reader reads out for a card that shows its hints visually. */
+function describe(card: CardModel, index: number): string {
+  const suit = suitOf(card.suit);
+  const hints = [suit?.label, card.rank && `number ${card.rank}`].filter(Boolean).join(', ');
+  return `Card ${index + 1} from the left, ${hints || 'no hints'}`;
+}
+
 // A card back IS the hint (DEC-6): the color hint floods the whole card, the
 // number hint is one oversized centred numeral. No hints -> a neutral dark back.
-export function Card({ card, cardW, cardH, pointerProps, transform, dimmed, focus }: Props) {
+export function Card({
+  card,
+  index,
+  cardW,
+  cardH,
+  drag,
+  transform,
+  dimmed,
+  focus,
+  tappable,
+  onTap,
+}: Props) {
   const suit = suitOf(card.suit);
   const [pop, popPlayed] = usePop(card.rank);
+
+  // The tap half of the card's one dual-purpose gesture (DEC-14). usePress is
+  // what makes the card a button rather than a div that happens to react to a
+  // finger: Enter and Space work, a screen reader can activate it, and the
+  // browser's emulated-mouse replay after a tap is handled by the hook rather
+  // than by cancelling touchend by hand.
+  const { pressProps } = usePress({
+    isDisabled: !tappable,
+    onPressStart: drag.pressStarted,
+    onPress: () => {
+      // A drag ends over the card it moved; only a gesture that stayed put is a tap.
+      if (!drag.pressWasDrag()) onTap(card.id);
+    },
+  });
   const style: CSSProperties = {
     ...transform,
     width: cardW,
@@ -64,7 +103,14 @@ export function Card({ card, cardW, cardH, pointerProps, transform, dimmed, focu
   };
 
   return (
-    <div className="card" style={style} {...pointerProps}>
+    <div
+      className="card"
+      role="button"
+      tabIndex={tappable ? 0 : -1}
+      aria-label={describe(card, index)}
+      style={style}
+      {...mergeProps(pressProps, drag.bindCard(index))}
+    >
       <Burst tint={suit ? suit.ink : '#c9d2dd'} />
       {card.rank && (
         <span

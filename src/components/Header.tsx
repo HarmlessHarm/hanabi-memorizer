@@ -1,5 +1,6 @@
 import type { HandSize } from '../lib/types';
 import { InstallControl } from './InstallControl';
+import { PressButton } from './PressButton';
 
 interface Props {
   handSize: HandSize;
@@ -22,22 +23,22 @@ export function Header({ handSize, canUndo, onHandSize, onUndo, onReset }: Props
         <InstallControl />
         <div className="segment" role="group" aria-label="Hand size">
           {([4, 5] as HandSize[]).map((n) => (
-            <button
+            <PressButton
               key={n}
               className={`seg-btn${handSize === n ? ' is-on' : ''}`}
               aria-pressed={handSize === n}
-              onClick={() => onHandSize(n)}
+              onPress={() => onHandSize(n)}
             >
               {n}
-            </button>
+            </PressButton>
           ))}
         </div>
-        <button className="chip" onClick={onUndo} disabled={!canUndo}>
+        <PressButton className="chip" onPress={onUndo} disabled={!canUndo}>
           Undo
-        </button>
-        <button className="chip" onClick={onReset}>
+        </PressButton>
+        <PressButton className="chip" onPress={onReset}>
           Reset
-        </button>
+        </PressButton>
       </div>
     </header>
   );

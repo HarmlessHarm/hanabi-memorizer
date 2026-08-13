@@ -4,6 +4,7 @@ import { useStageSize } from '../hooks/useStageSize';
 import { useHandDrag } from '../hooks/useHandDrag';
 import { Card } from './Card';
 import { DiscardZone } from './DiscardZone';
+import { PressButton } from './PressButton';
 
 interface Props {
   cards: CardModel[];
@@ -34,7 +35,6 @@ export function Hand({
     metrics,
     // Freeze dragging while a sheet is open, so a modal tap can't start a drag.
     enabled: selectedId === null,
-    onTap,
     onReorder,
     onDiscard,
   });
@@ -49,16 +49,16 @@ export function Hand({
 
       <div className="row" style={{ height: cardH, visibility: ready ? 'visible' : 'hidden' }}>
         {Array.from({ length: empty }).map((_, k) => (
-          <button
+          <PressButton
             key={`slot-${k}`}
             className="slot"
             style={{ width: cardW, height: cardH }}
-            onClick={onDraw}
+            onPress={onDraw}
             aria-label="Draw a card"
           >
             <span style={{ fontSize: cardH * 0.2, lineHeight: 1 }}>+</span>
             <span className="slot-label">Draw</span>
-          </button>
+          </PressButton>
         ))}
 
         {cards.map((c, i) => {
@@ -68,12 +68,15 @@ export function Hand({
             <Card
               key={c.id}
               card={c}
+              index={i}
               cardW={cardW}
               cardH={cardH}
-              pointerProps={drag.getCardProps(i)}
+              drag={drag}
               transform={drag.transformFor(i)}
               dimmed={dimmed}
               focus={focus}
+              tappable={selectedId === null}
+              onTap={onTap}
             />
           );
         })}
