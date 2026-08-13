@@ -52,7 +52,7 @@ test.describe('dragging a card', () => {
     // Give the first card a number so the reorder is observable.
     await page.locator('.card').first().tap();
     await page.locator('.pick').nth(2).tap();
-    await page.locator('.close.is-main').tap();
+    await page.locator('.sheet-ok').tap();
     expect(await ranksOnScreen(page)).toEqual(['3', '-', '-', '-', '-']);
 
     const from = await centreOf(page, '.card', 0);

@@ -55,7 +55,6 @@ export default function App() {
           card={selected}
           index={selectedIndex}
           onToggle={toggleHint}
-          onClear={() => hand.clearHints(selected.id)}
           onClose={() => setSelectedId(null)}
         />
       )}

@@ -61,6 +61,6 @@ export async function setRank(page: Page, cardIndex: number, rank: number): Prom
   await page.locator('.card').nth(cardIndex).tap();
   await page.waitForSelector('.sheet');
   await page.locator('.pick').nth(rank - 1).tap();
-  await page.locator('.close.is-main').tap();
+  await page.locator('.sheet-ok').tap();
   await page.waitForSelector('.sheet', { state: 'detached' });
 }

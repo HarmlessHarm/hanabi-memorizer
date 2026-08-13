@@ -34,7 +34,7 @@ test.describe('the numeral pop', () => {
 
     await page.locator('.card').first().tap();
     await page.locator('.swatch').first().tap();
-    await page.locator('.close.is-main').tap();
+    await page.locator('.sheet-ok').tap();
 
     expect(await drainPops(page)).toEqual([]);
   });
@@ -74,7 +74,7 @@ test.describe('the numeral pop', () => {
     await page.locator('.pick').nth(1).tap(); // 2
     await page.waitForTimeout(60); // inside the 220ms pop window
     await page.locator('.pick').nth(3).tap(); // 4
-    await page.locator('.close.is-main').tap();
+    await page.locator('.sheet-ok').tap();
 
     expect(await drainPops(page)).toEqual([
       { card: 0, rank: '2' },
