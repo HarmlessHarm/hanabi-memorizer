@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { centreOf, openApp, ranksOnScreen, touchGesture } from '../helpers/app';
+import { centreOf, openApp, ranksOnScreen, setRank, touchGesture } from '../helpers/app';
 
 /**
  * Regression cover for taps on a card being swallowed on a touchscreen.
@@ -68,7 +68,10 @@ test.describe('dragging a card', () => {
     await expect(page.locator('.sheet')).toHaveCount(0);
   });
 
-  test('upwards arms the discard confirmation', async ({ page }) => {
+  test('upwards discards it straight away, and Undo brings it back', async ({ page }) => {
+    await setRank(page, 0, 3);
+    expect(await ranksOnScreen(page)).toEqual(['3', '-', '-', '-', '-']);
+
     const c = await centreOf(page, '.card');
     await touchGesture(page, [
       c,
@@ -77,6 +80,10 @@ test.describe('dragging a card', () => {
       { x: c.x, y: c.y - 140 },
     ]);
 
-    await expect(page.locator('.chooser')).toBeVisible();
+    expect(await ranksOnScreen(page)).toEqual(['-', '-', '-', '-']);
+    await expect(page.locator('.sheet')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Undo' }).tap();
+    expect(await ranksOnScreen(page)).toEqual(['3', '-', '-', '-', '-']);
   });
 });

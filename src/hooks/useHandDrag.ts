@@ -30,7 +30,7 @@ interface Params {
   enabled: boolean;
   onTap: (id: number) => void;
   onReorder: (from: number, to: number) => void;
-  onDiscardIntent: (id: number) => void;
+  onDiscard: (id: number) => void;
 }
 
 export interface CardPointerProps {
@@ -45,13 +45,13 @@ export interface HandDragApi {
   getCardProps: (i: number) => CardPointerProps;
   transformFor: (i: number) => CSSProperties;
   dragging: boolean;
-  /** true once the dragged card has cleared the discard threshold (DEC-8) */
+  /** true once the dragged card has cleared the discard threshold */
   zoneArmed: boolean;
 }
 
 /**
  * A single pointer gesture that is dual-purpose (UX state 2): moving sideways
- * reorders live, moving up past the LIFT threshold switches to discard intent and
+ * reorders live, moving up past the LIFT threshold switches to a discard and
  * stops the reorder shuffle so the two never fight. A tap (movement under
  * DRAG_THRESHOLD) selects the card. Pointer events + capture are used because
  * HTML5 drag-and-drop does not fire on touch (DEC-9).
@@ -62,7 +62,7 @@ export function useHandDrag({
   enabled,
   onTap,
   onReorder,
-  onDiscardIntent,
+  onDiscard,
 }: Params): HandDragApi {
   const { cardH, step } = metrics;
 
@@ -142,12 +142,12 @@ export function useHandDrag({
         return;
       }
       if (d.out) {
-        onDiscardIntent(cardsRef.current[d.i].id);
+        onDiscard(cardsRef.current[d.i].id);
         return;
       }
       if (d.to !== d.i) finishReorder(d.i, d.to);
     },
-    [finishReorder, onDiscardIntent, onTap],
+    [finishReorder, onDiscard, onTap],
   );
 
   const onCancel = useCallback((e: React.PointerEvent) => {

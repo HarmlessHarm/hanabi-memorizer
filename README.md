@@ -17,8 +17,9 @@ this protects, not automates.
   as "big red 3" from across the table.
 - **Two taps to record a hint** — tap the card, tap the number or color. Re-tap to
   remove; **Clear** wipes both.
-- **Drag sideways to reorder**, **drag up to discard** (with a confirm). New cards
-  are drawn into the empty slot at the left.
+- **Drag sideways to reorder**, **drag up to discard** — no confirmation, a
+  mistaken discard is one **Undo** away. New cards are drawn into the empty slot
+  at the left.
 - **Undo / Reset** and a **4 / 5** hand-size toggle in the header.
 - **Silent local persistence** — survives a reload, a tab switch or a phone lock.
 - **Works offline** and is installable as a PWA.

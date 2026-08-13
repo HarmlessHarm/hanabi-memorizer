@@ -2,7 +2,7 @@ interface Props {
   height: number;
   /** a drag is in progress */
   active: boolean;
-  /** the card has cleared the threshold and releasing will discard (DEC-8) */
+  /** the card has cleared the threshold and releasing will discard */
   armed: boolean;
 }
 

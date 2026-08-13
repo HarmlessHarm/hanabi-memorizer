@@ -4,15 +4,13 @@ import { useHand } from './hooks/useHand';
 import { Header } from './components/Header';
 import { Hand } from './components/Hand';
 import { HintSheet } from './components/HintSheet';
-import { DiscardConfirm } from './components/DiscardConfirm';
 
 export default function App() {
   const hand = useHand();
 
-  // Transient UI state — which card's sheet is open, and which card is pending
-  // discard confirmation. The numeral pop is owned by the card it belongs to.
+  // Transient UI state — which card's sheet is open. The numeral pop is owned by
+  // the card it belongs to.
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [leavingId, setLeavingId] = useState<number | null>(null);
 
   const selected = hand.cards.find((c) => c.id === selectedId) ?? null;
   const selectedIndex = hand.cards.findIndex((c) => c.id === selectedId);
@@ -32,12 +30,6 @@ export default function App() {
     hand.reset();
   };
 
-  const discard = () => {
-    if (leavingId === null) return;
-    hand.removeCard(leavingId);
-    setLeavingId(null);
-  };
-
   return (
     <div className="app">
       <Header
@@ -52,16 +44,11 @@ export default function App() {
         cards={hand.cards}
         handSize={hand.handSize}
         selectedId={selectedId}
-        leavingId={leavingId}
         onTap={setSelectedId}
-        onDiscardIntent={setLeavingId}
+        onDiscard={hand.removeCard}
         onReorder={hand.reorder}
         onDraw={hand.draw}
       />
-
-      {leavingId !== null && (
-        <DiscardConfirm onKeep={() => setLeavingId(null)} onDiscard={discard} />
-      )}
 
       {selected && (
         <HintSheet
