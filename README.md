@@ -16,7 +16,7 @@ this protects, not automates.
   back; a number hint is one oversized centred numeral. A fully-known card reads
   as "big red 3" from across the table.
 - **Two taps to record a hint** — tap the card, tap the number or color. Re-tap to
-  remove; **Clear** wipes both.
+  remove; **OK** closes the sheet.
 - **Drag sideways to reorder**, **drag up to discard** — no confirmation, a
   mistaken discard is one **Undo** away. New cards are drawn into the empty slot
   at the left.

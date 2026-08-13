@@ -8,14 +8,12 @@ interface Props {
   /** 0-based position of the card, for the "Card N from the left" eyebrow */
   index: number;
   onToggle: (field: 'rank' | 'suit', value: Rank | SuitKey) => void;
-  onClear: () => void;
   onClose: () => void;
 }
 
 // The bottom sheet that opens on tapping a card (REQ-2). Two-taps-per-card budget:
-// tap card, tap the hint. Re-tapping an assigned hint removes it; Clear removes
-// both (REQ-2.4).
-export function HintSheet({ card, index, onToggle, onClear, onClose }: Props) {
+// tap card, tap the hint. Re-tapping an assigned hint removes it (REQ-2.4).
+export function HintSheet({ card, index, onToggle, onClose }: Props) {
   const summary =
     card.suit || card.rank
       ? [suitOf(card.suit)?.label, card.rank].filter(Boolean).join(' ')
@@ -28,15 +26,14 @@ export function HintSheet({ card, index, onToggle, onClear, onClose }: Props) {
           <div className="sheet-eyebrow">Card {index + 1} from the left</div>
           <div className="sheet-title">{summary}</div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="close" onClick={onClear}>
-            Clear
-          </button>
-          <button className="close is-main" onClick={onClose}>
-            Done
-          </button>
-        </div>
       </div>
+
+      {/* The sheet closes itself on a tap outside, but a hint tap lands close to
+          the sheet edge, so the deliberate way out gets a big centred target
+          sitting above the hints — within thumb reach, hard to miss. */}
+      <button className="sheet-ok" onClick={onClose}>
+        OK
+      </button>
 
       <div className="groups">
         <div className="group">

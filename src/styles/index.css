@@ -301,6 +301,25 @@ button:focus-visible {
   margin-bottom: 12px;
 }
 
+/* Primary way out of the hint sheet: full width, centred, above the hints. */
+.sheet-ok {
+  display: block;
+  width: 100%;
+  height: 56px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background: #2f3a49;
+  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.sheet-ok:active {
+  background: #3a4757;
+}
+
 .sheet-eyebrow {
   font-size: 11px;
   color: var(--ink-mute);
@@ -431,15 +450,54 @@ button:focus-visible {
   }
 }
 
-/* On short/landscape screens lay the two hint groups side by side. */
+/*
+ * On short/landscape screens the sheet used to run the full width with the two
+ * hint groups side by side, which swallowed the whole screen and stretched
+ * every pick into a wide slab. Keep the portrait shape instead — number row,
+ * colour row — and pull the panel in from the edges so the hand stays visible
+ * around it. Everything shrinks a little to buy back the second row's height.
+ */
 @media (max-height: 520px) {
-  .groups {
-    flex-direction: row;
-    gap: 18px;
+  .scrim {
+    justify-content: center;
   }
-  .groups > .group {
-    flex: 1;
+
+  .sheet {
+    max-width: 560px;
+    border-radius: 18px;
+    margin-bottom: calc(8px + env(safe-area-inset-bottom));
+    padding: 10px 14px 12px;
+  }
+
+  .sheet-head {
+    margin-bottom: 8px;
+  }
+
+  .sheet-title {
+    font-size: 16px;
+  }
+
+  .sheet-ok {
+    height: 44px;
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+
+  .group {
+    margin-bottom: 8px;
+  }
+
+  .group:last-child {
+    margin-bottom: 0;
+  }
+
+  .group-label {
     margin-bottom: 4px;
+  }
+
+  .pick,
+  .swatch {
+    height: 42px;
   }
 }
 

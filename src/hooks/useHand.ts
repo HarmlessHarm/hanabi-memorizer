@@ -10,7 +10,6 @@ export interface HandApi {
   canUndo: boolean;
   setHandSize: (n: HandSize) => void;
   toggleHint: (id: number, field: 'rank' | 'suit', value: Rank | SuitKey) => void;
-  clearHints: (id: number) => void;
   removeCard: (id: number) => void;
   draw: () => void;
   reorder: (from: number, to: number) => void;
@@ -64,15 +63,6 @@ export function useHand(): HandApi {
     [commit],
   );
 
-  const clearHints = useCallback(
-    (id: number) => {
-      commit(
-        cardsRef.current.map((c) => (c.id === id ? { ...c, rank: null, suit: null } : c)),
-      );
-    },
-    [commit],
-  );
-
   const removeCard = useCallback(
     (id: number) => commit(cardsRef.current.filter((c) => c.id !== id)),
     [commit],
@@ -111,7 +101,6 @@ export function useHand(): HandApi {
     canUndo: past.length > 0,
     setHandSize,
     toggleHint,
-    clearHints,
     removeCard,
     draw,
     reorder,
