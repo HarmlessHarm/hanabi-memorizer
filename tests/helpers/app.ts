@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
 export interface Point {
@@ -55,6 +56,27 @@ export function ranksOnScreen(page: Page): Promise<string[]> {
   return page
     .locator('.card')
     .evaluateAll((els) => els.map((el) => el.querySelector('.rank')?.textContent ?? '-'));
+}
+
+/** The negatives on each card, left to right, as their labels ("Not 3", "Not Red"). */
+export function antiHintsOnScreen(page: Page): Promise<string[][]> {
+  return page
+    .locator('.card')
+    .evaluateAll((els) =>
+      els.map((el) =>
+        [...el.querySelectorAll('.anti')].map((a) => a.getAttribute('aria-label') ?? ''),
+      ),
+    );
+}
+
+/** Opens the cogwheel menu, flips the anti-hints switch if needed, closes it. */
+export async function setAntiHints(page: Page, on: boolean): Promise<void> {
+  const cog = page.getByRole('button', { name: 'Settings' });
+  await cog.tap();
+  const toggle = page.getByRole('switch', { name: 'Anti-hints' });
+  if ((await toggle.getAttribute('aria-checked')) !== String(on)) await toggle.tap();
+  await cog.tap();
+  await expect(page.locator('.menu')).toHaveCount(0);
 }
 
 export async function setRank(page: Page, cardIndex: number, rank: number): Promise<void> {

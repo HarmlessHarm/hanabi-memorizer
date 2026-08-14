@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import type { Card as CardModel, Rank } from '../lib/types';
 import { cardBackground, suitOf } from '../lib/suits';
 import type { CardPointerProps } from '../hooks/useHandDrag';
+import { AntiHints } from './AntiHints';
 import { Burst } from './Burst';
 
 interface Props {
@@ -13,6 +14,8 @@ interface Props {
   transform: CSSProperties;
   dimmed: boolean;
   focus: boolean;
+  /** negatives are recorded whether or not they are shown; this is the setting */
+  showAntiHints: boolean;
 }
 
 /**
@@ -47,7 +50,16 @@ function usePop(rank: Rank | null): [number | null, () => void] {
 
 // A card back IS the hint (DEC-6): the color hint floods the whole card, the
 // number hint is one oversized centred numeral. No hints -> a neutral dark back.
-export function Card({ card, cardW, cardH, pointerProps, transform, dimmed, focus }: Props) {
+export function Card({
+  card,
+  cardW,
+  cardH,
+  pointerProps,
+  transform,
+  dimmed,
+  focus,
+  showAntiHints,
+}: Props) {
   const suit = suitOf(card.suit);
   const [pop, popPlayed] = usePop(card.rank);
   const style: CSSProperties = {
@@ -56,7 +68,9 @@ export function Card({ card, cardW, cardH, pointerProps, transform, dimmed, focu
     height: cardH,
     borderRadius: Math.round(cardH * 0.09),
     background: cardBackground(suit),
-    opacity: dimmed ? 0.3 : 1,
+    // Unpicked cards recede but stay readable and tappable: they are the ones
+    // you reach for to add a second card to the hint.
+    opacity: dimmed ? 0.55 : 1,
     marginTop: focus ? -12 : 0,
     boxShadow: focus
       ? '0 18px 34px rgba(0,0,0,.6), 0 0 0 2px #e7ecf2'
@@ -81,6 +95,15 @@ export function Card({ card, cardW, cardH, pointerProps, transform, dimmed, focu
         >
           {card.rank}
         </span>
+      )}
+
+      {/* Once a card knows its number, "not a 2" is noise — same for its colour. */}
+      {showAntiHints && (
+        <AntiHints
+          ranks={card.rank ? [] : card.notRanks}
+          suits={card.suit ? [] : card.notSuits}
+          size={Math.min(Math.round(cardW * 0.2), 26)}
+        />
       )}
     </div>
   );

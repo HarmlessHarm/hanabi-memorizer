@@ -27,7 +27,6 @@ interface DragState {
 interface Params {
   cards: Card[];
   metrics: Metrics;
-  enabled: boolean;
   onTap: (id: number) => void;
   onReorder: (from: number, to: number) => void;
   onDiscard: (id: number) => void;
@@ -59,7 +58,6 @@ export interface HandDragApi {
 export function useHandDrag({
   cards,
   metrics,
-  enabled,
   onTap,
   onReorder,
   onDiscard,
@@ -80,7 +78,6 @@ export function useHandDrag({
 
   const onDown = useCallback(
     (e: React.PointerEvent, i: number) => {
-      if (!enabled) return;
       // Right/middle mouse buttons and second fingers must not hijack a gesture:
       // only a primary press owns the hand.
       if (e.button !== 0 || !e.isPrimary) return;
@@ -101,7 +98,7 @@ export function useHandDrag({
         /* pointer capture is best-effort */
       }
     },
-    [enabled],
+    [],
   );
 
   const onMove = useCallback(

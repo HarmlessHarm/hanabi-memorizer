@@ -17,10 +17,17 @@ this protects, not automates.
   as "big red 3" from across the table.
 - **Two taps to record a hint** — tap the card, tap the number or color. Re-tap to
   remove; **OK** closes the sheet.
+- **One hint, several cards.** The hand stays live while the sheet is open, so tap
+  every card the hint named and give it to all of them at once.
+- **Anti-hints** (optional). A hint is also a statement about the cards it skipped:
+  switch this on and every card the hint missed gets a struck-through disc along
+  its bottom edge — a red one for "not red", a grey **4** for "not a 4". They are
+  derived from the hints you record; there is nothing to enter by hand.
 - **Drag sideways to reorder**, **drag up to discard** — no confirmation, a
   mistaken discard is one **Undo** away. New cards are drawn into the empty slot
   at the left.
-- **Undo / Reset** and a **4 / 5** hand-size toggle in the header.
+- **Undo in the header**, because it's used mid-turn. Hand size, anti-hints,
+  Install and Reset live behind the cogwheel next to it.
 - **Silent local persistence** — survives a reload, a tab switch or a phone lock.
 - **Works offline** and is installable as a PWA.
 
@@ -79,5 +86,8 @@ linked; `vercel --prod` deploys from the CLI.
 ## Scope
 
 v1 is a **solo, per-player, offline** tool — one hand per device. Deliberately out
-of scope: multiplayer sync, negative hints, hands larger than 5, and the rainbow
-suit. See [`.planning/decisions.md`](./.planning/decisions.md) for the reasoning.
+of scope: multiplayer sync, hands larger than 5, and the rainbow suit. Negative
+hints were v1's first deferral and are now in, behind a switch (DEC-14). What
+stays out is deduction: four negatives on a card do not turn into the fifth
+colour for you. See [`.planning/decisions.md`](./.planning/decisions.md) for the
+reasoning.

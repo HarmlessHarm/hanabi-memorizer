@@ -25,6 +25,8 @@ happened, the superseded position is recorded rather than erased.
   treatment possible.
 - **Rejected**: negative marks — not dropped on principle, deferred. It's the
   first candidate for v2, and the data model should not make it hard to add.
+- **Superseded by DEC-14**: negatives are in, behind a switch. The bet held —
+  adding them cost one field pair on `Card` and one new pure module.
 
 ## DEC-3: Play and discard collapse into one action
 - **Context**: the prototype initially offered both.
@@ -113,6 +115,8 @@ happened, the superseded position is recorded rather than erased.
   alongside Reset and the hand-size toggle.
 - **Why**: a misdrag with a phone in one hand is common, and the alternative is
   reconstructing hints from memory — the exact failure the app exists to prevent.
+- **Amended by DEC-16**: only Undo kept its place in the header. Reset and the
+  hand-size toggle moved into the cogwheel menu — first-class, but not urgent.
 
 ## DEC-13: Solo per-player tool for v1
 - **Context**: an alternative shape exists where the hint *giver* taps the cards in
@@ -122,3 +126,46 @@ happened, the superseded position is recorded rather than erased.
   network at the table.
 - **Note**: this is the fork that most changes the project. It was raised and
   deliberately deferred, not settled — see the open questions.
+
+## DEC-14: Negative hints are derived, never entered
+- **Context**: DEC-2 deferred negatives. Advanced players do track them, and the
+  information is free — a hint that skips your card tells you what it isn't.
+- **Options considered**: a third pick row in the sheet for marking negatives by
+  hand; deriving them from the hints already being recorded.
+- **Chosen**: derived, from the selection a hint was given to. Off by default,
+  switched on in the settings menu.
+- **Why**: entering them by hand doubles the taps per hint and is exactly the
+  bookkeeping the app exists to remove. The player already tells the app which
+  cards a hint named; every other card in the hand follows from that.
+- **Consequence**: it only works if a hint can name several cards at once, which
+  is what pushed the hand to stay live under the open sheet (DEC-15).
+- **Not built**: deduction. Four negatives on a card do not become the fifth
+  colour. That is the part of the game the app protects, and it is the line
+  between recording what you were told and playing for you.
+
+## DEC-15: The hand stays tappable while the hint sheet is open
+- **Context**: hints name a set of cards, but the sheet's backdrop covered the
+  hand, so the selection was frozen at one card the moment the sheet opened.
+- **Chosen**: backdrop and sheet became separate layers with the card row
+  slotted between them — above the dimming, under the sheet. Tapping a card adds
+  or removes it from the selection; tapping anywhere else still closes.
+- **Why**: it keeps the two-taps-per-hint budget for a hint on four cards, and
+  the cards you are choosing between stay readable while you choose.
+- **Cost**: nothing on screen announces it, so a one-off tooltip fires on the
+  first card ever selected on the device (a localStorage flag, not part of the
+  hand state). And on a landscape phone the sheet still covers the middle of the
+  hand — at 360px of height there is no arrangement that fits both, so multi-card
+  selection there is limited to the cards either side of the sheet.
+
+## DEC-16: One cogwheel menu instead of a row of header controls
+- **Context**: hand size, anti-hints, Install and Reset had all accumulated in
+  the header, and anti-hints would have been the fifth control competing with the
+  cards for a phone's width.
+- **Chosen**: Undo stays in the header; everything else moved into a dropdown
+  behind a cogwheel.
+- **Why**: Undo is the only one reached for mid-turn, in a hurry. The rest are
+  set once a game or once ever, and the header is meant to be recessive.
+- **Note**: the menu dismisses on a document `pointerdown` outside itself rather
+  than behind a full-screen backdrop. A backdrop appearing under the finger
+  catches the phantom mouse click a touchscreen fires after every tap and closes
+  the menu the tap just opened — the bug the hint sheet shipped with once.

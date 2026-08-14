@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Card, HandSize, Rank, SuitKey } from '../lib/types';
+import type { HintField } from '../lib/hints';
+import { applyHint } from '../lib/hints';
 import { freshHand, loadHand, makeCard, saveHand } from '../lib/storage';
 
 const UNDO_LIMIT = 30;
@@ -7,9 +9,12 @@ const UNDO_LIMIT = 30;
 export interface HandApi {
   cards: Card[];
   handSize: HandSize;
+  antiHints: boolean;
   canUndo: boolean;
   setHandSize: (n: HandSize) => void;
-  toggleHint: (id: number, field: 'rank' | 'suit', value: Rank | SuitKey) => void;
+  setAntiHints: (on: boolean) => void;
+  /** applies (or, if they all have it, removes) one hint across a selection */
+  hint: (ids: number[], field: HintField, value: Rank | SuitKey) => void;
   removeCard: (id: number) => void;
   draw: () => void;
   reorder: (from: number, to: number) => void;
@@ -26,6 +31,7 @@ export function useHand(): HandApi {
   const initial = useMemo(() => loadHand(), []);
   const [cards, setCards] = useState<Card[]>(initial.cards);
   const [handSize, setHandSizeState] = useState<HandSize>(initial.handSize);
+  const [antiHints, setAntiHintsState] = useState<boolean>(initial.antiHints);
   const [past, setPast] = useState<Card[][]>([]);
 
   // Latest cards for use inside event handlers without stale-closure bugs.
@@ -41,9 +47,9 @@ export function useHand(): HandApi {
       firstRun.current = false;
       return;
     }
-    const t = setTimeout(() => saveHand({ cards, handSize }), 250);
+    const t = setTimeout(() => saveHand({ cards, handSize, antiHints }), 250);
     return () => clearTimeout(t);
-  }, [cards, handSize]);
+  }, [cards, handSize, antiHints]);
 
   const commit = useCallback((next: Card[]) => {
     setPast((p) => [...p, cardsRef.current].slice(-UNDO_LIMIT));
@@ -52,15 +58,16 @@ export function useHand(): HandApi {
 
   const setHandSize = useCallback((n: HandSize) => setHandSizeState(n), []);
 
-  const toggleHint = useCallback(
-    (id: number, field: 'rank' | 'suit', value: Rank | SuitKey) => {
-      commit(
-        cardsRef.current.map((c) =>
-          c.id === id ? { ...c, [field]: c[field] === value ? null : value } : c,
-        ),
-      );
+  // Turning negatives off leaves the ones already derived on the cards alone: it
+  // stops deriving new ones and stops showing them, and turning it back on
+  // restores the record rather than a hand that has silently forgotten hints.
+  const setAntiHints = useCallback((on: boolean) => setAntiHintsState(on), []);
+
+  const hint = useCallback(
+    (ids: number[], field: HintField, value: Rank | SuitKey) => {
+      commit(applyHint(cardsRef.current, ids, field, value, antiHints));
     },
-    [commit],
+    [antiHints, commit],
   );
 
   const removeCard = useCallback(
@@ -98,9 +105,11 @@ export function useHand(): HandApi {
   return {
     cards,
     handSize,
+    antiHints,
     canUndo: past.length > 0,
     setHandSize,
-    toggleHint,
+    setAntiHints,
+    hint,
     removeCard,
     draw,
     reorder,

@@ -35,11 +35,12 @@ test.describe('tapping a card', () => {
     await expect(page.locator('.sheet')).toBeVisible();
   });
 
+  // Not just any point outside the sheet: the cards themselves stay live while
+  // it is open, so "outside" means away from the hand — here, the discard zone.
   test('tapping the backdrop still closes the sheet', async ({ page }) => {
     await touchGesture(page, [await centreOf(page, '.card')]);
-    const sheet = await page.locator('.sheet').boundingBox();
 
-    await touchGesture(page, [{ x: 200, y: sheet!.y - 120 }]);
+    await touchGesture(page, [await centreOf(page, '.zone')]);
 
     await expect(page.locator('.sheet')).toHaveCount(0);
   });

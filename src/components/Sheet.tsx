@@ -12,6 +12,12 @@ interface Props {
 /**
  * The shared backdrop + bottom sheet.
  *
+ * The two are siblings rather than parent and child so that the hand can sit
+ * *between* them — above the dimming backdrop, so cards stay visible and
+ * tappable while a hint is being picked, but under the sheet, which overlaps the
+ * card row on a short screen. A single nested backdrop would put its whole
+ * subtree on one layer and leave no room in the middle for the cards.
+ *
  * Dismissal is gated on the press having *started* on the backdrop rather than
  * simply on a click landing there. A touchscreen emits a phantom mouse click a
  * few ms after every tap, aimed at whatever is under the finger by then — for a
@@ -24,18 +30,22 @@ export function Sheet({ onDismiss, variant, children }: Props) {
   const pressedBackdrop = useRef(false);
 
   return (
-    <div
-      className="scrim"
-      onPointerDown={(e) => {
-        pressedBackdrop.current = e.target === e.currentTarget;
-      }}
-      onClick={(e) => {
-        if (e.target !== e.currentTarget || !pressedBackdrop.current) return;
-        pressedBackdrop.current = false;
-        onDismiss();
-      }}
-    >
-      <div className={variant ? `sheet ${variant}` : 'sheet'}>{children}</div>
-    </div>
+    <>
+      <div
+        className="scrim"
+        onPointerDown={(e) => {
+          pressedBackdrop.current = e.target === e.currentTarget;
+        }}
+        onClick={(e) => {
+          if (e.target !== e.currentTarget || !pressedBackdrop.current) return;
+          pressedBackdrop.current = false;
+          onDismiss();
+        }}
+      />
+      {/* Transparent to pointers, so a tap beside the sheet reaches the backdrop. */}
+      <div className="sheet-layer">
+        <div className={variant ? `sheet ${variant}` : 'sheet'}>{children}</div>
+      </div>
+    </>
   );
 }

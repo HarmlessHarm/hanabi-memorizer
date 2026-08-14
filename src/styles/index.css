@@ -142,14 +142,22 @@ button:focus-visible {
   cursor: default;
 }
 
-.chip-install {
+.chip-icon {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 12px;
-  background: #223247;
-  color: #cfe0f5;
-  border-color: rgba(120, 170, 240, 0.35);
+  justify-content: center;
+  width: 34px;
+  padding: 0;
+}
+
+.chip-icon.is-on {
+  background: #2c3441;
+  color: var(--ink);
+}
+
+.cog {
+  width: 19px;
+  height: 19px;
 }
 
 .install-glyph {
@@ -170,14 +178,105 @@ button:focus-visible {
   font-weight: 600;
 }
 
-/* On narrow phones drop the word, keep the icon, to protect header space. */
-@media (max-width: 380px) {
-  .install-text {
-    display: none;
-  }
-  .chip-install {
-    padding: 0 10px;
-  }
+/* ----------------------------------------------------------- settings menu */
+
+.menu-wrap {
+  position: relative;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 70;
+  width: 262px;
+  max-width: calc(100vw - 24px);
+  padding: 6px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55);
+  animation: drop 140ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.menu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+}
+
+.menu-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.menu-note {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--ink-mute);
+}
+
+.menu-sep {
+  height: 1px;
+  margin: 5px 6px;
+  background: var(--hairline);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-dim);
+  font-size: 14px;
+  text-align: left;
+}
+
+.menu-item:active {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.menu-item.is-danger {
+  color: var(--danger);
+}
+
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 27px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #262d38;
+  transition: background 140ms ease;
+}
+
+.switch.is-on {
+  background: #3a6ea5;
+}
+
+.knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--ink);
+  transition: transform 140ms ease;
+}
+
+.switch.is-on .knob {
+  transform: translateX(19px);
 }
 
 /* --------------------------------------------------------------- stage */
@@ -218,6 +317,42 @@ button:focus-visible {
   flex-shrink: 0;
 }
 
+/* The one-off nudge that a hint can name more than one card. Absolute, so it
+   floats above the hand without moving it. */
+.tip {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  max-width: min(280px, 88vw);
+  padding: 9px 13px;
+  border-radius: 12px;
+  background: #f0f3f7;
+  color: #171b21;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.5);
+  /* Its own keyframes, not `rise`: a shared one would animate `transform` to
+     none and drop the centring translate on the last frame. */
+  animation: tip-in 220ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  /* It sits over the discard zone, i.e. over the sheet's tap-to-close area, and
+     it must never swallow the tap it is standing in front of. */
+  pointer-events: none;
+}
+
+/* the little arrow pointing down at the cards */
+.tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -7px;
+  border: 7px solid transparent;
+  border-top-color: #f0f3f7;
+}
+
 /* ---------------------------------------------------------------- card */
 
 .card {
@@ -241,6 +376,25 @@ button:focus-visible {
 
 .rank.is-pop {
   animation: pop 220ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+/* What the card is not: a row of struck-through discs along the bottom edge,
+   wrapping to a second row rather than shrinking below legibility. */
+.antis {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: 5%;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-end;
+}
+
+.anti {
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
 }
 
 .burst {
@@ -275,16 +429,27 @@ button:focus-visible {
 
 /* -------------------------------------------------------- sheets/modals */
 
+/* Backdrop and sheet are separate layers with a gap in the z-order between them,
+   so the hand (z-index 55, set on .row while a sheet is open) can sit above the
+   dimming and stay tappable while the sheet still covers it. */
 .scrim {
   position: fixed;
   inset: 0;
   background: rgba(6, 8, 11, 0.65);
-  display: flex;
-  align-items: flex-end;
   z-index: 50;
 }
 
+.sheet-layer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  z-index: 60;
+  pointer-events: none;
+}
+
 .sheet {
+  pointer-events: auto;
   width: 100%;
   background: var(--panel);
   border-top: 1px solid rgba(255, 255, 255, 0.09);
@@ -387,6 +552,13 @@ button:focus-visible {
   border: 1.5px solid rgba(255, 255, 255, 0.55);
 }
 
+/* Some, but not all, of the selected cards carry this hint. */
+.pick.is-part {
+  background: #0b0d10;
+  border: 1.5px dashed rgba(255, 255, 255, 0.4);
+  color: var(--ink-dim);
+}
+
 .swatch {
   flex: 1;
   height: 52px;
@@ -439,6 +611,28 @@ button:focus-visible {
   }
 }
 
+@keyframes tip-in {
+  from {
+    transform: translateX(-50%) translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%);
+    opacity: 1;
+  }
+}
+
+@keyframes drop {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
 @keyframes rise {
   from {
     transform: translateY(16px);
@@ -458,7 +652,7 @@ button:focus-visible {
  * around it. Everything shrinks a little to buy back the second row's height.
  */
 @media (max-height: 520px) {
-  .scrim {
+  .sheet-layer {
     justify-content: center;
   }
 
@@ -499,13 +693,28 @@ button:focus-visible {
   .swatch {
     height: 42px;
   }
+
+  /* There is no room above the hand for the nudge here — the sheet is sitting
+     in it. Float it clear of both, at the top of the screen. */
+  .tip {
+    position: fixed;
+    bottom: auto;
+    top: calc(6px + env(safe-area-inset-top));
+  }
+
+  .tip::after {
+    display: none;
+  }
 }
 
 /* Motion is feedback, never the only signal (NFR-6). */
 @media (prefers-reduced-motion: reduce) {
   .card,
   .rank,
-  .sheet {
+  .sheet,
+  .menu,
+  .tip,
+  .knob {
     animation: none !important;
     transition: none !important;
   }
