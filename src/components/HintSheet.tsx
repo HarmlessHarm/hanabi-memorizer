@@ -1,6 +1,7 @@
 import type { Card } from '../lib/types';
 import type { Rank, SuitKey } from '../lib/types';
 import { RANKS, SUITS, suitOf } from '../lib/suits';
+import { PressButton } from './PressButton';
 import { Sheet } from './Sheet';
 
 interface Props {
@@ -31,23 +32,23 @@ export function HintSheet({ card, index, onToggle, onClose }: Props) {
       {/* The sheet closes itself on a tap outside, but a hint tap lands close to
           the sheet edge, so the deliberate way out gets a big centred target
           sitting above the hints — within thumb reach, hard to miss. */}
-      <button className="sheet-ok" onClick={onClose}>
+      <PressButton className="sheet-ok" onPress={onClose}>
         OK
-      </button>
+      </PressButton>
 
       <div className="groups">
         <div className="group">
           <div className="group-label">Number</div>
           <div className="pick-row">
             {RANKS.map((n) => (
-              <button
+              <PressButton
                 key={n}
                 className={`pick${card.rank === n ? ' is-on' : ''}`}
                 aria-pressed={card.rank === n}
-                onClick={() => onToggle('rank', n)}
+                onPress={() => onToggle('rank', n)}
               >
                 {n}
-              </button>
+              </PressButton>
             ))}
           </div>
         </div>
@@ -56,12 +57,12 @@ export function HintSheet({ card, index, onToggle, onClose }: Props) {
           <div className="group-label">Color</div>
           <div className="pick-row">
             {SUITS.map((s) => (
-              <button
+              <PressButton
                 key={s.key}
                 className="swatch"
                 aria-label={s.label}
                 aria-pressed={card.suit === s.key}
-                onClick={() => onToggle('suit', s.key)}
+                onPress={() => onToggle('suit', s.key)}
                 style={{
                   background: s.hex,
                   color: s.ink,
@@ -72,7 +73,7 @@ export function HintSheet({ card, index, onToggle, onClose }: Props) {
                 }}
               >
                 {card.suit === s.key ? '✓' : ''}
-              </button>
+              </PressButton>
             ))}
           </div>
         </div>

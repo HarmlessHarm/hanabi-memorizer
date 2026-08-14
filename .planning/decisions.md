@@ -122,3 +122,35 @@ happened, the superseded position is recorded rather than erased.
   network at the table.
 - **Note**: this is the fork that most changes the project. It was raised and
   deliberately deferred, not settled — see the open questions.
+
+## DEC-14: One press model, from libraries, for every control
+- **Context**: the app had grown two ways of answering a finger. Cards ran on
+  hand-rolled `pointerdown/move/up` and acted on `pointerup`; every button ran on
+  a plain `onClick`. Acting before the browser's click is what created the
+  phantom-click bug — the tap opened a sheet, and the click that followed landed
+  on the sheet's own backdrop and closed it — which cost `Sheet.tsx` a gating
+  ref and `useHandDrag` a `touchend` `preventDefault`, one fix each, neither
+  helping the other.
+- **Options considered**: keep hand-rolling and patch per control; `usePress`
+  from `@react-aria/interactions`; `@use-gesture/react`; `dnd-kit`;
+  `framer-motion`'s `Reorder`.
+- **Chosen**: `usePress` for every tap — cards, draw slots, header chips, hint
+  picks, swatches, sheet buttons — and `@use-gesture/react`'s `useDrag` for the
+  reorder/discard gesture. `dnd-kit` was rejected as oversized for a five-item
+  row and unsettled (core last published Dec 2024, docs archived Feb 2026,
+  successor still 0.x); `framer-motion` doesn't fit one gesture that is both a
+  sideways reorder and a drag up to discard.
+- **Why**: `usePress` resolves on the browser's real click, with a synthetic one
+  ~80ms after release when the browser skips it (iOS and Android do after a long
+  press). So the card behaves exactly like the buttons beside it, the phantom
+  click has nothing left to break — verified by deleting the `Sheet.tsx` gate and
+  watching the regression tests still pass — and a slow press and a quick tap do
+  the same thing. It also carries keyboard and screen-reader activation, which is
+  how the card stopped being a `<div>` no one but a mouse or a finger could use.
+- **Cost**: +12.6 kB gzipped (51.2 → 63.8), about a quarter of the bundle.
+- **Note**: this reverses DEC-9's "rejected: a drag library" and settles DEC-10's
+  note that the reorder probably shouldn't be hand-rolled. The settle frame in
+  DEC-10 stays — it is a layout-vs-transform conflict, which `useDrag` does not
+  claim to solve. The mouse's tighter 8px drag threshold is gone: one `TAP_SLOP`
+  of 12px now serves both, because the gesture must not start inside the tap
+  window or a rolling fingertip lifts a card that then resolves as a tap.

@@ -3,10 +3,12 @@ import type { HandSize } from './types';
 export const GAP = 10;
 /** fraction of card height a card must travel up to arm the discard zone (DEC-8) */
 export const LIFT = 0.34;
-/** movement in px that separates a tap from a drag with a mouse (DEC-9, REQ-5.1) */
-export const DRAG_THRESHOLD = 8;
-/** the same, for a finger: a fingertip rolls a few px on even a deliberate tap */
-export const TOUCH_DRAG_THRESHOLD = 12;
+/**
+ * Movement in px that separates a tap from a drag (DEC-9, REQ-5.1). One value
+ * for mouse and finger alike: a fingertip rolls a few px on even a deliberate
+ * tap, and a mouse is only ever more precise than the allowance it is given.
+ */
+export const TAP_SLOP = 12;
 
 export interface Box {
   w: number;

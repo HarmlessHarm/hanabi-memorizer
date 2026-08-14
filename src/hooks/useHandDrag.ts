@@ -1,20 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, DOMAttributes } from 'react';
+import { useDrag } from '@use-gesture/react';
 import type { Card } from '../lib/types';
 import type { Metrics } from '../lib/layout';
-import { DRAG_THRESHOLD, LIFT, TOUCH_DRAG_THRESHOLD } from '../lib/layout';
-
-interface DragRef {
-  pointerId: number;
-  /** px of travel this pointer is allowed before the gesture stops being a tap */
-  slop: number;
-  i: number;
-  to: number;
-  x0: number;
-  y0: number;
-  moved: boolean;
-  out: boolean;
-}
+import { LIFT, TAP_SLOP } from '../lib/layout';
 
 interface DragState {
   i: number;
@@ -28,22 +17,18 @@ interface Params {
   cards: Card[];
   metrics: Metrics;
   enabled: boolean;
-  onTap: (id: number) => void;
   onReorder: (from: number, to: number) => void;
   onDiscard: (id: number) => void;
 }
 
-export interface CardPointerProps {
-  onPointerDown: (e: React.PointerEvent) => void;
-  onPointerMove: (e: React.PointerEvent) => void;
-  onPointerUp: (e: React.PointerEvent) => void;
-  onPointerCancel: (e: React.PointerEvent) => void;
-  onTouchEnd: (e: React.TouchEvent) => void;
-}
-
 export interface HandDragApi {
-  getCardProps: (i: number) => CardPointerProps;
+  /** drag handlers for the card at index i; the tap half lives in Card's usePress */
+  bindCard: (i: number) => DOMAttributes<Element>;
   transformFor: (i: number) => CSSProperties;
+  /** called when a press begins, to re-arm the tap/drag distinction */
+  pressStarted: () => void;
+  /** true if the gesture now ending travelled far enough to be a drag, not a tap */
+  pressWasDrag: () => boolean;
   dragging: boolean;
   /** true once the dragged card has cleared the discard threshold */
   zoneArmed: boolean;
@@ -52,15 +37,17 @@ export interface HandDragApi {
 /**
  * A single pointer gesture that is dual-purpose (UX state 2): moving sideways
  * reorders live, moving up past the LIFT threshold switches to a discard and
- * stops the reorder shuffle so the two never fight. A tap (movement under
- * DRAG_THRESHOLD) selects the card. Pointer events + capture are used because
- * HTML5 drag-and-drop does not fire on touch (DEC-9).
+ * stops the reorder shuffle so the two never fight. Movement under TAP_SLOP is
+ * a tap, which Card's `usePress` picks up instead (DEC-14).
+ *
+ * `useDrag` owns the pointer bookkeeping — capture, the movement threshold, and
+ * telling a tap from a drag — which HTML5 drag-and-drop cannot do on touch at
+ * all (DEC-9).
  */
 export function useHandDrag({
   cards,
   metrics,
   enabled,
-  onTap,
   onReorder,
   onDiscard,
 }: Params): HandDragApi {
@@ -72,55 +59,13 @@ export function useHandDrag({
   // for that one frame, then re-enable (DEC-10).
   const [settling, setSettling] = useState(false);
 
-  const dragRef = useRef<DragRef | null>(null);
+  // A drag ends with the finger still over the card it moved, so the press that
+  // wraps it would otherwise also read as a tap and open the sheet on release.
+  const draggedRef = useRef(false);
   const cardsRef = useRef(cards);
   useEffect(() => {
     cardsRef.current = cards;
   }, [cards]);
-
-  const onDown = useCallback(
-    (e: React.PointerEvent, i: number) => {
-      if (!enabled) return;
-      // Right/middle mouse buttons and second fingers must not hijack a gesture:
-      // only a primary press owns the hand.
-      if (e.button !== 0 || !e.isPrimary) return;
-      if (dragRef.current) return;
-      dragRef.current = {
-        pointerId: e.pointerId,
-        slop: e.pointerType === 'mouse' ? DRAG_THRESHOLD : TOUCH_DRAG_THRESHOLD,
-        i,
-        to: i,
-        x0: e.clientX,
-        y0: e.clientY,
-        moved: false,
-        out: false,
-      };
-      try {
-        (e.currentTarget as Element).setPointerCapture(e.pointerId);
-      } catch {
-        /* pointer capture is best-effort */
-      }
-    },
-    [enabled],
-  );
-
-  const onMove = useCallback(
-    (e: React.PointerEvent) => {
-      const d = dragRef.current;
-      if (!d || e.pointerId !== d.pointerId) return;
-      const dx = e.clientX - d.x0;
-      const dy = e.clientY - d.y0;
-      if (!d.moved && Math.hypot(dx, dy) < d.slop) return;
-      d.moved = true;
-      d.out = dy < -cardH * LIFT;
-      const n = cardsRef.current.length;
-      d.to = d.out
-        ? d.i
-        : Math.max(0, Math.min(n - 1, d.i + Math.round(dx / step)));
-      setDrag({ i: d.i, to: d.to, dx, dy, out: d.out });
-    },
-    [cardH, step],
-  );
 
   const finishReorder = useCallback(
     (from: number, to: number) => {
@@ -131,53 +76,46 @@ export function useHandDrag({
     [onReorder],
   );
 
-  const onUp = useCallback(
-    (e: React.PointerEvent, i: number) => {
-      const d = dragRef.current;
-      if (!d || e.pointerId !== d.pointerId) return;
-      dragRef.current = null;
+  const bindCard = useDrag(
+    ({ args, active, movement: [dx, dy], tap }) => {
+      // Under the threshold nothing moved, so leave it to usePress.
+      if (tap) return;
+
+      const i = args[0] as number;
+      const n = cardsRef.current.length;
+      const out = dy < -cardH * LIFT;
+      const to = out ? i : Math.max(0, Math.min(n - 1, i + Math.round(dx / step)));
+
+      if (active) {
+        draggedRef.current = true;
+        setDrag({ i, to, dx, dy, out });
+        return;
+      }
+
       setDrag(null);
-      if (!d.moved) {
-        onTap(cardsRef.current[i].id);
-        return;
-      }
-      if (d.out) {
-        onDiscard(cardsRef.current[d.i].id);
-        return;
-      }
-      if (d.to !== d.i) finishReorder(d.i, d.to);
+      const card = cardsRef.current[i];
+      if (!card) return;
+      if (out) onDiscard(card.id);
+      else if (to !== i) finishReorder(i, to);
     },
-    [finishReorder, onDiscard, onTap],
+    {
+      enabled,
+      // Matched on purpose: the drag must not start inside the tap window, or a
+      // fingertip rolling a few px would lift the card and then resolve as a tap
+      // the drag handler has already discarded.
+      threshold: TAP_SLOP,
+      filterTaps: true,
+      tapsThreshold: TAP_SLOP,
+      // The card is a focusable button now; arrow keys must not drag it.
+      pointer: { keys: false },
+    },
   );
 
-  const onCancel = useCallback((e: React.PointerEvent) => {
-    const d = dragRef.current;
-    if (!d || e.pointerId !== d.pointerId) return;
-    dragRef.current = null;
-    setDrag(null);
+  const pressStarted = useCallback(() => {
+    draggedRef.current = false;
   }, []);
 
-  // A touchscreen replays every tap as a phantom mouse sequence (mousedown,
-  // mouseup, click) a few ms after touchend, hit-tested against whatever sits
-  // under the finger *by then* — which, for a tap that opens a sheet, is the
-  // sheet's own backdrop. Left alone that click closes the sheet the tap just
-  // opened, so a tap looks like it did nothing while a slow press (too long to
-  // count as a tap, so no phantom click) works. The pointer handlers above have
-  // already done the work; cancelling touchend suppresses the replay entirely.
-  const onTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (e.cancelable) e.preventDefault();
-  }, []);
-
-  const getCardProps = useCallback(
-    (i: number): CardPointerProps => ({
-      onPointerDown: (e) => onDown(e, i),
-      onPointerMove: onMove,
-      onPointerUp: (e) => onUp(e, i),
-      onPointerCancel: onCancel,
-      onTouchEnd,
-    }),
-    [onCancel, onDown, onMove, onTouchEnd, onUp],
-  );
+  const pressWasDrag = useCallback(() => draggedRef.current, []);
 
   const transformFor = useCallback(
     (i: number): CSSProperties => {
@@ -202,8 +140,10 @@ export function useHandDrag({
   );
 
   return {
-    getCardProps,
+    bindCard,
     transformFor,
+    pressStarted,
+    pressWasDrag,
     dragging: drag !== null,
     zoneArmed: drag !== null && drag.out,
   };
