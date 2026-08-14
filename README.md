@@ -22,7 +22,9 @@ this protects, not automates.
 - **Anti-hints** (optional). A hint is also a statement about the cards it skipped:
   switch this on and every card the hint missed gets a struck-through disc along
   its bottom edge — a red one for "not red", a grey **4** for "not a 4". They are
-  derived from the hints you record; there is nothing to enter by hand.
+  derived from the hints you record; there is nothing to enter by hand. They land
+  when you close the sheet, not as you pick, so tapping 2 and correcting to 3
+  leaves one hint behind rather than two.
 - **Drag sideways to reorder**, **drag up to discard** — no confirmation, a
   mistaken discard is one **Undo** away. New cards are drawn into the empty slot
   at the left.
@@ -56,16 +58,22 @@ npm run preview # serve the production build locally
 ## Test
 
 ```bash
-npx playwright install chromium   # one-off, downloads the browser
-npm test                          # starts the dev server itself and runs both projects
-npm test -- --project=phone       # touch only
-npm test -- --headed --debug      # watch it happen / step through
-npm run test:report               # open the HTML report after a failure
+npx playwright install chromium        # one-off, downloads the browser
+npm test                               # starts the dev server itself, runs all three projects
+npm test -- --project=phone            # portrait touch only
+npm test -- --project=phone-landscape  # the same phone, rotated
+npm test -- --headed --debug           # watch it happen / step through
+npm run test:report                    # open the HTML report after a failure
 ```
 
 [Playwright](https://playwright.dev/) end-to-end tests in [`tests/`](./tests/), split
-into a **phone** project (Pixel 7 emulation, real touch input) and a **desktop**
-project (mouse).
+into **phone** (412×916) and **phone-landscape** (916×412) projects with real touch
+input, and a **desktop** project (mouse). Both phone viewports are pinned to 20:9,
+the ratio nearly every phone sold in the last few years has and the shape this app
+is actually held in — Playwright's own Pixel 7 descriptors are 2.04:1 and 2.4:1,
+and cards are sized against both axes, so the ratio is the part that decides the
+layout. Rotated, there is no room for the sheet and the full hand at once; what
+survives that squeeze is what [`tests/landscape/`](./tests/landscape/) holds down.
 
 The split is the point. Both bugs this app has actually shipped were browser
 behaviours that are invisible with a mouse on a desktop and that reading the code

@@ -1,10 +1,19 @@
 import { useCallback, useState } from 'react';
 import type { Rank, SuitKey } from './lib/types';
+import type { HintField } from './lib/hints';
 import { hasSeenMultiHintTip, markMultiHintTipSeen } from './lib/storage';
 import { useHand } from './hooks/useHand';
 import { Header } from './components/Header';
 import { Hand } from './components/Hand';
 import { HintSheet } from './components/HintSheet';
+
+/** The values picked while one hint sheet was open, in tap order. */
+interface Touched {
+  ranks: Rank[];
+  suits: SuitKey[];
+}
+
+const NOTHING_TOUCHED: Touched = { ranks: [], suits: [] };
 
 export default function App() {
   const hand = useHand();
@@ -16,19 +25,37 @@ export default function App() {
   const [tipSeen, setTipSeen] = useState(hasSeenMultiHintTip);
   const [tip, setTip] = useState(false);
 
+  // Which values this sheet has been shown, so the negatives can be worked out
+  // once at the end from where they landed — not on every tap, which would tell
+  // the rest of the hand about a 2 the player only touched by accident.
+  const [touched, setTouched] = useState<Touched>(NOTHING_TOUCHED);
+
   // Read back off the hand rather than trusted as stored, so a card discarded
   // while it was selected simply drops out of the selection.
   const selected = hand.cards.filter((c) => selectedIds.includes(c.id));
   const positions = selected.map((c) => hand.cards.indexOf(c));
   const liveIds = selected.map((c) => c.id);
 
-  const clear = useCallback(() => {
+  /** Puts the sheet away without settling — for Undo and Reset. */
+  const drop = useCallback(() => {
     setSelectedIds([]);
+    setTouched(NOTHING_TOUCHED);
     setTip(false);
   }, []);
 
+  /** The player is done picking: the hint is now given, so let it speak for the
+   *  cards it skipped. */
+  const closeSheet = useCallback(() => {
+    hand.settleHints(liveIds, touched.ranks, touched.suits);
+    drop();
+  }, [drop, hand, liveIds, touched]);
+
   const onTapCard = useCallback(
     (id: number) => {
+      // A sheet opening on an empty selection starts a fresh hint. (The old one
+      // is already settled, unless its last card was discarded out from under it.)
+      if (!liveIds.length) setTouched(NOTHING_TOUCHED);
+
       const next = selectedIds.includes(id)
         ? selectedIds.filter((x) => x !== id)
         : [...selectedIds, id];
@@ -44,26 +71,30 @@ export default function App() {
         setTip(false);
       }
     },
-    [selectedIds, tipSeen],
+    [liveIds.length, selectedIds, tipSeen],
   );
 
-  const toggleHint = (field: 'rank' | 'suit', value: Rank | SuitKey) => {
-    if (!selected.length) return;
+  const toggleHint = (field: HintField, value: Rank | SuitKey) => {
+    if (!liveIds.length) return;
     setTip(false);
-    hand.hint(
-      selected.map((c) => c.id),
-      field,
-      value,
-    );
+    hand.hint(liveIds, field, value);
+    setTouched((t) => {
+      if (field === 'rank') {
+        const v = value as Rank;
+        return t.ranks.includes(v) ? t : { ...t, ranks: [...t.ranks, v] };
+      }
+      const v = value as SuitKey;
+      return t.suits.includes(v) ? t : { ...t, suits: [...t.suits, v] };
+    });
   };
 
   const undo = () => {
-    clear();
+    drop();
     hand.undo();
   };
 
   const reset = () => {
-    clear();
+    drop();
     hand.reset();
   };
 
@@ -96,7 +127,7 @@ export default function App() {
           cards={selected}
           positions={positions}
           onToggle={toggleHint}
-          onClose={clear}
+          onClose={closeSheet}
         />
       )}
     </div>

@@ -62,6 +62,11 @@ test.describe('hinting several cards at once', () => {
  * Being skipped by a hint is information: the cards the hint did not name are
  * now known not to be that number or colour. The app records it only when the
  * setting is on, and never asks the player to enter one by hand.
+ *
+ * The timing is the subtle part. Picking is not the same as having picked — a
+ * player who taps 2 and then 3 has given one hint, and the rest of the hand must
+ * not come away believing it isn't a 2. So the negatives are worked out once,
+ * when the sheet closes, from where the hints actually landed.
  */
 test.describe('anti-hints', () => {
   test.beforeEach(async ({ page }) => openApp(page));
@@ -123,7 +128,33 @@ test.describe('anti-hints', () => {
     ]);
   });
 
-  test('taking a mis-tapped hint back takes its negatives with it', async ({ page }) => {
+  test('land when the sheet closes, not while it is still open', async ({ page }) => {
+    await setAntiHints(page, true);
+
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.locator('.pick').nth(2).tap();
+
+    // The cards are visible under the open sheet, and carry nothing yet.
+    expect(await antiHintsOnScreen(page)).toEqual([[], [], [], [], []]);
+
+    await page.locator('.sheet-ok').tap();
+    expect(await antiHintsOnScreen(page)).toEqual([[], ['Not 3'], ['Not 3'], ['Not 3'], ['Not 3']]);
+  });
+
+  test('ignore a number the player corrected before closing', async ({ page }) => {
+    await setAntiHints(page, true);
+
+    // Meant to tap 3, hit 2 on the way. One hint was given, not two.
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.locator('.pick').nth(1).tap();
+    await page.locator('.pick').nth(2).tap();
+    await page.locator('.sheet-ok').tap();
+
+    expect(await ranksOnScreen(page)).toEqual(['3', '-', '-', '-', '-']);
+    expect(await antiHintsOnScreen(page)).toEqual([[], ['Not 3'], ['Not 3'], ['Not 3'], ['Not 3']]);
+  });
+
+  test('a hint tapped on and off again settles to nothing', async ({ page }) => {
     await setAntiHints(page, true);
 
     await touchGesture(page, [await centreOf(page, '.card', 0)]);
@@ -133,5 +164,46 @@ test.describe('anti-hints', () => {
 
     expect(await ranksOnScreen(page)).toEqual(['-', '-', '-', '-', '-']);
     expect(await antiHintsOnScreen(page)).toEqual([[], [], [], [], []]);
+  });
+
+  test('taking a hint back later takes its negatives with it', async ({ page }) => {
+    await setAntiHints(page, true);
+
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.locator('.pick').nth(2).tap();
+    await page.locator('.sheet-ok').tap();
+    expect(await antiHintsOnScreen(page)).toEqual([[], ['Not 3'], ['Not 3'], ['Not 3'], ['Not 3']]);
+
+    // Wrong card entirely: reopen it and take the 3 off again.
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.locator('.pick').nth(2).tap();
+    await page.locator('.sheet-ok').tap();
+
+    expect(await ranksOnScreen(page)).toEqual(['-', '-', '-', '-', '-']);
+    expect(await antiHintsOnScreen(page)).toEqual([[], [], [], [], []]);
+  });
+
+  test('one Undo takes back the hint and everything it implied', async ({ page }) => {
+    await setAntiHints(page, true);
+
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.locator('.pick').nth(2).tap();
+    await page.locator('.sheet-ok').tap();
+
+    await page.getByRole('button', { name: 'Undo' }).tap();
+
+    expect(await ranksOnScreen(page)).toEqual(['-', '-', '-', '-', '-']);
+    expect(await antiHintsOnScreen(page)).toEqual([[], [], [], [], []]);
+  });
+
+  test('settle when the sheet is closed by tapping away from it', async ({ page }) => {
+    await setAntiHints(page, true);
+
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.locator('.pick').nth(2).tap();
+    await touchGesture(page, [await centreOf(page, '.zone')]);
+
+    await expect(page.locator('.sheet')).toHaveCount(0);
+    expect(await antiHintsOnScreen(page)).toEqual([[], ['Not 3'], ['Not 3'], ['Not 3'], ['Not 3']]);
   });
 });

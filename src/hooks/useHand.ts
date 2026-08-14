@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Card, HandSize, Rank, SuitKey } from '../lib/types';
 import type { HintField } from '../lib/hints';
-import { applyHint } from '../lib/hints';
+import { setHint, settleNegatives } from '../lib/hints';
 import { freshHand, loadHand, makeCard, saveHand } from '../lib/storage';
 
 const UNDO_LIMIT = 30;
@@ -15,6 +15,8 @@ export interface HandApi {
   setAntiHints: (on: boolean) => void;
   /** applies (or, if they all have it, removes) one hint across a selection */
   hint: (ids: number[], field: HintField, value: Rank | SuitKey) => void;
+  /** the hint is finished: derive what it says about the cards it skipped */
+  settleHints: (ids: number[], ranks: Rank[], suits: SuitKey[]) => void;
   removeCard: (id: number) => void;
   draw: () => void;
   reorder: (from: number, to: number) => void;
@@ -65,9 +67,24 @@ export function useHand(): HandApi {
 
   const hint = useCallback(
     (ids: number[], field: HintField, value: Rank | SuitKey) => {
-      commit(applyHint(cardsRef.current, ids, field, value, antiHints));
+      commit(setHint(cardsRef.current, ids, field, value));
     },
-    [antiHints, commit],
+    [commit],
+  );
+
+  /**
+   * Deliberately *not* a commit: the negatives ride along with the hint tap that
+   * produced them, so one Undo takes back the hint and everything it implied
+   * rather than leaving the hand knowing things about a hint that no longer
+   * exists.
+   */
+  const settleHints = useCallback(
+    (ids: number[], ranks: Rank[], suits: SuitKey[]) => {
+      if (!antiHints) return;
+      const next = settleNegatives(cardsRef.current, ids, ranks, suits);
+      if (next !== cardsRef.current) setCards(next);
+    },
+    [antiHints],
   );
 
   const removeCard = useCallback(
@@ -110,6 +127,7 @@ export function useHand(): HandApi {
     setHandSize,
     setAntiHints,
     hint,
+    settleHints,
     removeCard,
     draw,
     reorder,

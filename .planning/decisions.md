@@ -139,6 +139,7 @@ happened, the superseded position is recorded rather than erased.
   cards a hint named; every other card in the hand follows from that.
 - **Consequence**: it only works if a hint can name several cards at once, which
   is what pushed the hand to stay live under the open sheet (DEC-15).
+- **Amended by DEC-17**: they are derived when the sheet closes, not per tap.
 - **Not built**: deduction. Four negatives on a card do not become the fifth
   colour. That is the part of the game the app protects, and it is the line
   between recording what you were told and playing for you.
@@ -169,3 +170,22 @@ happened, the superseded position is recorded rather than erased.
   than behind a full-screen backdrop. A backdrop appearing under the finger
   catches the phantom mouse click a touchscreen fires after every tap and closes
   the menu the tap just opened — the bug the hint sheet shipped with once.
+
+## DEC-17: A hint is settled when the sheet closes, not on every tap
+- **Context**: deriving negatives on each pick meant a player who tapped 2, saw
+  it was wrong and tapped 3 left the rest of the hand knowing it wasn't a 2. The
+  hand had learned something from a mis-tap that was never a hint.
+- **Options considered**: an explicit Apply button; undoing the negatives on each
+  correction; deferring the derivation to the end of the sheet session.
+- **Chosen**: the sheet records which values it was shown, and works the
+  negatives out once on close — reading each value's final state back off the
+  cards, so one tapped on and off again settles to nothing.
+- **Why**: picking is not the same as having picked. Nothing else in the app
+  needs a commit step, and adding an Apply button would have cost the
+  two-taps-per-hint budget for the sake of a mis-tap.
+- **Consequence**: the settle deliberately skips the undo stack, so one Undo
+  takes back the hint tap *and* the negatives it implied, rather than leaving the
+  hand knowing things about a hint that no longer exists.
+- **Known gap**: a hint whose last card is discarded before the sheet closes
+  never settles. The card it was about is gone; the negatives it would have left
+  are not worth a special case.
