@@ -86,6 +86,42 @@ export function settleNegatives(
   return changed ? next : cards;
 }
 
+/**
+ * Take one negative back off a set of cards (REQ-2.6).
+ *
+ * Negatives are derived, never entered — but a derivation is only as good as the
+ * hint it came from. A card tapped by mistake, or one the player forgot to add to
+ * the selection, leaves the rest of the hand holding something it was never told.
+ * Undo reaches the last action; this reaches the mistake noticed three hints
+ * later, without unwinding everything since.
+ *
+ * It clears the value from every card in `ids`, whether or not they all carry it,
+ * and touches nothing else — removing what a card is *not* says nothing about the
+ * rest of the hand, so there is no settling to do.
+ */
+export function clearNegative(
+  cards: Card[],
+  ids: number[],
+  field: HintField,
+  value: Rank | SuitKey,
+): Card[] {
+  let changed = false;
+  const next = cards.map((c) => {
+    if (!ids.includes(c.id)) return c;
+    if (field === 'rank') {
+      const list = without(c.notRanks, value as Rank);
+      if (list.length === c.notRanks.length) return c;
+      changed = true;
+      return { ...c, notRanks: list };
+    }
+    const list = without(c.notSuits, value as SuitKey);
+    if (list.length === c.notSuits.length) return c;
+    changed = true;
+    return { ...c, notSuits: list };
+  });
+  return changed ? next : cards;
+}
+
 const without = <T,>(list: T[], value: T): T[] => list.filter((v) => v !== value);
 
 const toggle = <T,>(list: T[], value: T, on: boolean): T[] => {

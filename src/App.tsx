@@ -88,6 +88,13 @@ export default function App() {
     });
   };
 
+  /** A derived negative that turned out to be wrong: take it off, no settling. */
+  const clearNegative = (field: HintField, value: Rank | SuitKey) => {
+    if (!liveIds.length) return;
+    setTip(false);
+    hand.clearNegative(liveIds, field, value);
+  };
+
   const undo = () => {
     drop();
     hand.undo();
@@ -127,6 +134,8 @@ export default function App() {
           cards={selected}
           positions={positions}
           onToggle={toggleHint}
+          onClearNegative={clearNegative}
+          showAntiHints={hand.antiHints}
           onClose={closeSheet}
         />
       )}

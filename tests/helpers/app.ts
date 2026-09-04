@@ -69,6 +69,13 @@ export function antiHintsOnScreen(page: Page): Promise<string[][]> {
     );
 }
 
+/** The negatives the open sheet offers to take back off the selection. */
+export function ruledOutInSheet(page: Page): Promise<string[]> {
+  return page
+    .locator('.anti-chip')
+    .evaluateAll((els) => els.map((el) => el.getAttribute('aria-label') ?? ''));
+}
+
 /** Opens the cogwheel menu, flips the anti-hints switch if needed, closes it. */
 export async function setAntiHints(page: Page, on: boolean): Promise<void> {
   const cog = page.getByRole('button', { name: 'Settings' });

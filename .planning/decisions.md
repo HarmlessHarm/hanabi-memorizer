@@ -154,9 +154,9 @@ happened, the superseded position is recorded rather than erased.
   the cards you are choosing between stay readable while you choose.
 - **Cost**: nothing on screen announces it, so a one-off tooltip fires on the
   first card ever selected on the device (a localStorage flag, not part of the
-  hand state). And on a landscape phone the sheet still covers the middle of the
-  hand — at 360px of height there is no arrangement that fits both, so multi-card
-  selection there is limited to the cards either side of the sheet.
+  hand state). And on a landscape phone the sheet covers the bottom of the
+  screen, which for a while left only the cards either side of it selectable —
+  **amended by DEC-19**: the hand now moves above the panel instead.
 
 ## DEC-16: One cogwheel menu instead of a row of header controls
 - **Context**: hand size, anti-hints, Install and Reset had all accumulated in
@@ -189,3 +189,47 @@ happened, the superseded position is recorded rather than erased.
 - **Known gap**: a hint whose last card is discarded before the sheet closes
   never settles. The card it was about is gone; the negatives it would have left
   are not worth a special case.
+
+## DEC-18: A derived negative can be taken back off, from the sheet
+- **Context**: negatives are only as true as the hint they came from. A card
+  tapped into the selection by mistake, or one left out of it, leaves the rest of
+  the hand marked with something it was never told — and it is usually noticed
+  several hints later, long past what Undo can reach.
+- **Options considered**: tapping the badge on the card itself; a long-press on
+  the card; offering the selection's negatives back inside the hint sheet.
+- **Chosen**: the sheet grows a "Ruled out" row when the selection carries any
+  negatives — the same struck disc as on the card, on a 40px target, and tapping
+  one clears it from every selected card.
+- **Why**: the card is already spoken for by tap-to-select and drag-to-reorder,
+  and a badge is a few millimetres wide in the middle of that gesture. The sheet
+  is where a hint is corrected already (REQ-2.4), so the correction to what a
+  hint implied belongs beside it. It also inherits multi-select for free: one tap
+  fixes the same wrong negative across four cards.
+- **Consequence**: it is a commit, unlike the settle (DEC-17) — a removal is an
+  action taken on purpose, so it stands on the undo stack in its own right.
+  Removing a negative settles nothing: what a card is *not* says nothing about
+  the rest of the hand.
+- **Note**: the row mirrors the card face, so a negative hidden under a positive
+  on its own card is not offered either. The record survives underneath; if the
+  positive is taken off, the negative shows again.
+
+## DEC-19: In landscape, the hand climbs above the panel instead of hiding under it
+- **Context**: the hint panel had grown to where it covered the hand outright on
+  a rotated phone. Selecting a card animated it — a lift, a highlight ring —
+  behind the panel, so the feedback that a tap had landed was invisible.
+- **Options considered**: shrinking the cards while the panel is up; scrolling
+  the panel; moving the hand.
+- **Chosen**: while a card is selected on a short screen the discard zone gives
+  up its space and the row packs against the top of the stage, leaving every card
+  standing above the panel. OK moves up beside the heading there too, which buys
+  back another row of card.
+- **Why**: cards that resize on selection re-flow the drag metrics mid-gesture,
+  and a scrolling panel hides its own hints. Moving the row costs nothing but the
+  zone, which is only ever used at the *start* of a gesture — and no one drags a
+  card away while choosing what to tell it.
+- **Consequence**: the red drag-up-to-discard strip is off screen for as long as
+  the panel is up. The gesture still works — the threshold is a fraction of card
+  height, not a hit test on the zone — it just has no target drawn for it.
+- **Cost**: ~85px of each card shows at 916x412 with the panel at its tallest.
+  Enough for the lift, the ring and the top of a numeral; not the whole card.
+

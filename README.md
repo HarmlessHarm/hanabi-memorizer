@@ -24,12 +24,18 @@ this protects, not automates.
   its bottom edge — a red one for "not red", a grey **4** for "not a 4". They are
   derived from the hints you record; there is nothing to enter by hand. They land
   when you close the sheet, not as you pick, so tapping 2 and correcting to 3
-  leaves one hint behind rather than two.
+  leaves one hint behind rather than two. A negative that turned out to be wrong —
+  the hint it came from named the wrong cards — is tapped off again under **Ruled
+  out** in the sheet, for every selected card at once.
 - **Drag sideways to reorder**, **drag up to discard** — no confirmation, a
   mistaken discard is one **Undo** away. New cards are drawn into the empty slot
   at the left.
 - **Undo in the header**, because it's used mid-turn. Hand size, anti-hints,
   Install and Reset live behind the cogwheel next to it.
+- **Rotated, the hand climbs over the panel.** On a landscape phone the hint
+  panel owns the bottom of the screen, so while it is open the discard zone steps
+  aside and the cards move to the top, standing above it — you can still see the
+  card you picked lift and light up.
 - **Silent local persistence** — survives a reload, a tab switch or a phone lock.
 - **Works offline** and is installable as a PWA.
 
@@ -72,8 +78,9 @@ input, and a **desktop** project (mouse). Both phone viewports are pinned to 20:
 the ratio nearly every phone sold in the last few years has and the shape this app
 is actually held in — Playwright's own Pixel 7 descriptors are 2.04:1 and 2.4:1,
 and cards are sized against both axes, so the ratio is the part that decides the
-layout. Rotated, there is no room for the sheet and the full hand at once; what
-survives that squeeze is what [`tests/landscape/`](./tests/landscape/) holds down.
+layout. Rotated, there is no room for the panel, the discard zone and the hand
+at once; how that squeeze is resolved — the zone stepping aside, the hand moving
+above the panel — is what [`tests/landscape/`](./tests/landscape/) holds down.
 
 The split is the point. Both bugs this app has actually shipped were browser
 behaviours that are invisible with a mouse on a desktop and that reading the code

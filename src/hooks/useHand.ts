@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Card, HandSize, Rank, SuitKey } from '../lib/types';
 import type { HintField } from '../lib/hints';
-import { setHint, settleNegatives } from '../lib/hints';
+import { clearNegative, setHint, settleNegatives } from '../lib/hints';
 import { freshHand, loadHand, makeCard, saveHand } from '../lib/storage';
 
 const UNDO_LIMIT = 30;
@@ -17,6 +17,8 @@ export interface HandApi {
   hint: (ids: number[], field: HintField, value: Rank | SuitKey) => void;
   /** the hint is finished: derive what it says about the cards it skipped */
   settleHints: (ids: number[], ranks: Rank[], suits: SuitKey[]) => void;
+  /** takes one derived negative back off a selection, for when it was wrong */
+  clearNegative: (ids: number[], field: HintField, value: Rank | SuitKey) => void;
   removeCard: (id: number) => void;
   draw: () => void;
   reorder: (from: number, to: number) => void;
@@ -87,6 +89,18 @@ export function useHand(): HandApi {
     [antiHints],
   );
 
+  /**
+   * A commit, unlike `settleHints`: this one is an action the player took on
+   * purpose, so it belongs on the undo stack in its own right.
+   */
+  const clearNegativeHint = useCallback(
+    (ids: number[], field: HintField, value: Rank | SuitKey) => {
+      const next = clearNegative(cardsRef.current, ids, field, value);
+      if (next !== cardsRef.current) commit(next);
+    },
+    [commit],
+  );
+
   const removeCard = useCallback(
     (id: number) => commit(cardsRef.current.filter((c) => c.id !== id)),
     [commit],
@@ -128,6 +142,7 @@ export function useHand(): HandApi {
     setAntiHints,
     hint,
     settleHints,
+    clearNegative: clearNegativeHint,
     removeCard,
     draw,
     reorder,

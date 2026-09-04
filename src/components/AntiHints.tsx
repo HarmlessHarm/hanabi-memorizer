@@ -15,6 +15,13 @@ interface Props {
  */
 const STRIKE = '#101419';
 
+/** The disc a "not a 4" sits on — no suit owns a number, so it is plain grey. */
+export const RANK_FILL = '#78828f';
+
+/** "Not 3", "Not Red" — one phrasing, used on the card and in the sheet alike. */
+export const notLabel = (field: 'rank' | 'suit', value: Rank | SuitKey): string =>
+  field === 'rank' ? `Not ${value}` : `Not ${suitOf(value as SuitKey)?.label ?? value}`;
+
 /**
  * What the card is *not*, along its bottom edge: the colour or number in a small
  * disc with a stripe through it. Deliberately a different visual language from a
@@ -31,18 +38,13 @@ export function AntiHints({ ranks, suits, size }: Props) {
       {[...ranks]
         .sort((a, b) => a - b)
         .map((r) => (
-          <Badge key={`r${r}`} size={size} label={`Not ${r}`} fill="#78828f">
+          <AntiBadge key={`r${r}`} size={size} label={notLabel('rank', r)} fill={RANK_FILL}>
             {r}
-          </Badge>
+          </AntiBadge>
         ))}
 
       {ordered.map((s) => (
-        <Badge
-          key={`s${s.key}`}
-          size={size}
-          label={`Not ${suitOf(s.key)?.label ?? s.key}`}
-          fill={s.hex}
-        />
+        <AntiBadge key={`s${s.key}`} size={size} label={notLabel('suit', s.key)} fill={s.hex} />
       ))}
     </div>
   );
@@ -50,20 +52,21 @@ export function AntiHints({ ranks, suits, size }: Props) {
 
 interface BadgeProps {
   size: number;
-  label: string;
+  /** omitted when something around the badge already names it */
+  label?: string;
   fill: string;
   children?: number;
 }
 
-function Badge({ size, label, fill, children }: BadgeProps) {
+/** One struck-through disc. Exported so the sheet can offer the same token back. */
+export function AntiBadge({ size, label, fill, children }: BadgeProps) {
   return (
     <svg
       className="anti"
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      role="img"
-      aria-label={label}
+      {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
     >
       {/* The ring keeps a dark badge legible on a dark card and a light one on white. */}
       <circle cx="12" cy="12" r="10.4" fill={fill} stroke="rgba(0,0,0,.55)" strokeWidth="1.6" />

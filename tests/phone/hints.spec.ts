@@ -4,6 +4,7 @@ import {
   centreOf,
   openApp,
   ranksOnScreen,
+  ruledOutInSheet,
   setAntiHints,
   touchGesture,
 } from '../helpers/app';
@@ -205,5 +206,102 @@ test.describe('anti-hints', () => {
 
     await expect(page.locator('.sheet')).toHaveCount(0);
     expect(await antiHintsOnScreen(page)).toEqual([[], ['Not 3'], ['Not 3'], ['Not 3'], ['Not 3']]);
+  });
+});
+
+/**
+ * A negative is only as true as the hint it was derived from. Tap the wrong card
+ * into a selection, or forget one, and the rest of the hand comes away holding
+ * something it was never told — usually noticed several hints later, long past
+ * what Undo can reach. So the sheet offers the selection's negatives back.
+ */
+test.describe('taking a wrong anti-hint off', () => {
+  test.beforeEach(async ({ page }) => openApp(page));
+
+  test('the sheet offers what the selection has been told it is not', async ({ page }) => {
+    await setAntiHints(page, true);
+
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.locator('.pick').nth(2).tap();
+    await page.getByRole('button', { name: 'Red' }).tap();
+    await page.locator('.sheet-ok').tap();
+
+    await touchGesture(page, [await centreOf(page, '.card', 2)]);
+    expect(await ruledOutInSheet(page)).toEqual(['Remove Not 3', 'Remove Not Red']);
+  });
+
+  test('removing one takes it off the card and leaves the rest alone', async ({ page }) => {
+    await setAntiHints(page, true);
+
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.locator('.pick').nth(2).tap();
+    await page.locator('.sheet-ok').tap();
+
+    // Card 3 was never part of that hint: the 3 belonged to a card since discarded.
+    await touchGesture(page, [await centreOf(page, '.card', 2)]);
+    await page.getByRole('button', { name: 'Remove Not 3' }).tap();
+    await page.locator('.sheet-ok').tap();
+
+    expect(await antiHintsOnScreen(page)).toEqual([[], ['Not 3'], [], ['Not 3'], ['Not 3']]);
+    expect(await ranksOnScreen(page)).toEqual(['3', '-', '-', '-', '-']);
+  });
+
+  test('one tap clears it from every selected card', async ({ page }) => {
+    await setAntiHints(page, true);
+
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.getByRole('button', { name: 'Blue' }).tap();
+    await page.locator('.sheet-ok').tap();
+
+    await touchGesture(page, [await centreOf(page, '.card', 1)]);
+    await touchGesture(page, [await centreOf(page, '.card', 3)]);
+    await page.getByRole('button', { name: 'Remove Not Blue' }).tap();
+    await page.locator('.sheet-ok').tap();
+
+    expect(await antiHintsOnScreen(page)).toEqual([[], [], ['Not Blue'], [], ['Not Blue']]);
+  });
+
+  test('a removal is one Undo away, like every other change', async ({ page }) => {
+    await setAntiHints(page, true);
+
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.locator('.pick').nth(2).tap();
+    await page.locator('.sheet-ok').tap();
+
+    await touchGesture(page, [await centreOf(page, '.card', 2)]);
+    await page.getByRole('button', { name: 'Remove Not 3' }).tap();
+    await page.locator('.sheet-ok').tap();
+    expect(await antiHintsOnScreen(page)).toEqual([[], ['Not 3'], [], ['Not 3'], ['Not 3']]);
+
+    await page.getByRole('button', { name: 'Undo' }).tap();
+    expect(await antiHintsOnScreen(page)).toEqual([[], ['Not 3'], ['Not 3'], ['Not 3'], ['Not 3']]);
+  });
+
+  test('offers only what the card actually shows', async ({ page }) => {
+    await setAntiHints(page, true);
+
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.locator('.pick').nth(2).tap();
+    await page.locator('.sheet-ok').tap();
+
+    // Card 3 is a 5 now, so "not a 3" is noise on its face — and nothing to
+    // remove in the sheet either. The record is still there under the 5.
+    await touchGesture(page, [await centreOf(page, '.card', 2)]);
+    await page.locator('.pick').nth(4).tap();
+    expect(await ruledOutInSheet(page)).toEqual([]);
+  });
+
+  test('offers nothing while anti-hints are switched off', async ({ page }) => {
+    await setAntiHints(page, true);
+
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.locator('.pick').nth(2).tap();
+    await page.locator('.sheet-ok').tap();
+
+    await setAntiHints(page, false);
+    await touchGesture(page, [await centreOf(page, '.card', 2)]);
+
+    await expect(page.locator('.sheet')).toBeVisible();
+    expect(await ruledOutInSheet(page)).toEqual([]);
   });
 });

@@ -74,6 +74,10 @@ for feel, not a codebase to port; the real app is a fresh project. [ref: DEC-1]
     control removes both — mistyped hints are common and must be cheap to fix.
   - **REQ-2.5** (MAY): Record negative hints ("not red", "not 3"). Deferred from
     v1; the card model should accommodate it without restructuring. [ref: DEC-2]
+  - **REQ-2.6** (MUST): Remove a negative hint from a card. Negatives are derived
+    from a selection, so a mis-tapped or incomplete selection leaves the hand
+    holding something it was never told — usually noticed long past what Undo
+    reaches. [ref: DEC-18]
 - **REQ-3** (MUST): Manage the hand as the game progresses.
   - **REQ-3.1** (MUST): Reorder cards by dragging horizontally; neighbours move out
     of the way and the new order persists. [ref: DEC-9, DEC-10]

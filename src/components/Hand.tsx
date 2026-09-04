@@ -56,8 +56,14 @@ export function Hand({
     ...(selectedIds.length ? { position: 'relative', zIndex: 55 } : null),
   };
 
+  // Landscape has no room for the discard zone, the hand and the sheet at once,
+  // so while a hint is being picked the stage drops the zone and packs the cards
+  // against its top edge, leaving them standing above the panel (DEC-19). In
+  // portrait the class is inert — the sheet clears the hand there already.
+  const picking = selectedIds.length > 0;
+
   return (
-    <main ref={stageRef} className="stage">
+    <main ref={stageRef} className={picking ? 'stage is-picking' : 'stage'}>
       <DiscardZone height={zoneH} active={drag.dragging} armed={drag.zoneArmed} />
 
       <div className="row" style={rowStyle}>
