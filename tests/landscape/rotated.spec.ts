@@ -93,6 +93,24 @@ test.describe('turned sideways', () => {
     }
   });
 
+  test('the negatives stay readable while the panel is up', async ({ page }) => {
+    await setAntiHints(page, true);
+    await touchGesture(page, [await centreOf(page, '.card', 0)]);
+    await page.locator('.pick').nth(2).tap();
+    await page.locator('.sheet-ok').tap();
+
+    // Which cards a hint names is decided by what they are already known not to
+    // be, so the badges have to survive the panel covering the rest of the card.
+    await touchGesture(page, [await centreOf(page, '.card', 1)]);
+    const sheet = await page.locator('.sheet').boundingBox();
+    const badges = await page
+      .locator('.card .anti')
+      .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().bottom));
+
+    expect(badges).toHaveLength(4);
+    for (const bottom of badges) expect(bottom).toBeLessThan(sheet!.y);
+  });
+
   test('the picked card is visibly lifted above the others', async ({ page }) => {
     await touchGesture(page, [await centreOf(page, '.card', 2)]);
     const tops = (await cardBoxes(page)).map((b) => b.top);

@@ -21,7 +21,7 @@ this protects, not automates.
   every card the hint named and give it to all of them at once.
 - **Anti-hints** (optional). A hint is also a statement about the cards it skipped:
   switch this on and every card the hint missed gets a struck-through disc along
-  its bottom edge — a red one for "not red", a grey **4** for "not a 4". They are
+  its top edge — a red one for "not red", a grey **4** for "not a 4". They are
   derived from the hints you record; there is nothing to enter by hand. They land
   when you close the sheet, not as you pick, so tapping 2 and correcting to 3
   leaves one hint behind rather than two. A negative that turned out to be wrong —

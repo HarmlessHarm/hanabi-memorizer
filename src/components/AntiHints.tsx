@@ -23,7 +23,7 @@ export const notLabel = (field: 'rank' | 'suit', value: Rank | SuitKey): string 
   field === 'rank' ? `Not ${value}` : `Not ${suitOf(value as SuitKey)?.label ?? value}`;
 
 /**
- * What the card is *not*, along its bottom edge: the colour or number in a small
+ * What the card is *not*, along its top edge: the colour or number in a small
  * disc with a stripe through it. Deliberately a different visual language from a
  * positive hint — a hint is the whole card (DEC-6), a negative is a token you
  * have to lean in for. It is worth less at the table and should look like it.

@@ -378,18 +378,22 @@ button:focus-visible {
   animation: pop 220ms cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 
-/* What the card is not: a row of struck-through discs along the bottom edge,
-   wrapping to a second row rather than shrinking below legibility. */
+/* What the card is not: a row of struck-through discs along the top edge,
+   wrapping to a second row rather than shrinking below legibility.
+   The top edge, because that is the strip of card that stays on screen — above
+   the hint panel in landscape (DEC-19), and above the card in front of it if the
+   hand is ever fanned. What a card is *not* is exactly what you re-read while
+   choosing which cards a hint names, so it has to survive the panel being up. */
 .antis {
   position: absolute;
   left: 4%;
   right: 4%;
-  bottom: 5%;
+  top: 5%;
   z-index: 3;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  align-content: flex-end;
+  align-content: flex-start;
 }
 
 .anti {

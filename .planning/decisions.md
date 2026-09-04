@@ -232,4 +232,7 @@ happened, the superseded position is recorded rather than erased.
   height, not a hit test on the zone — it just has no target drawn for it.
 - **Cost**: ~85px of each card shows at 916x412 with the panel at its tallest.
   Enough for the lift, the ring and the top of a numeral; not the whole card.
+- **Follow-on**: the negatives moved from the bottom edge of the card to the top,
+  into that surviving strip. They are what you re-read while deciding which cards
+  a hint names, so they are exactly the thing that must not be behind the panel.
 
