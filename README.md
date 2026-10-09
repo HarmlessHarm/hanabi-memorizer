@@ -17,10 +17,25 @@ this protects, not automates.
   as "big red 3" from across the table.
 - **Two taps to record a hint** — tap the card, tap the number or color. Re-tap to
   remove; **OK** closes the sheet.
+- **One hint, several cards.** The hand stays live while the sheet is open, so tap
+  every card the hint named and give it to all of them at once.
+- **Anti-hints** (optional). A hint is also a statement about the cards it skipped:
+  switch this on and every card the hint missed gets a struck-through disc along
+  its top edge — a red one for "not red", a grey **4** for "not a 4". They are
+  derived from the hints you record; there is nothing to enter by hand. They land
+  when you close the sheet, not as you pick, so tapping 2 and correcting to 3
+  leaves one hint behind rather than two. A negative that turned out to be wrong —
+  the hint it came from named the wrong cards — is tapped off again under **Ruled
+  out** in the sheet, for every selected card at once.
 - **Drag sideways to reorder**, **drag up to discard** — no confirmation, a
   mistaken discard is one **Undo** away. New cards are drawn into the empty slot
   at the left.
-- **Undo / Reset** and a **4 / 5** hand-size toggle in the header.
+- **Undo in the header**, because it's used mid-turn. Hand size, anti-hints,
+  Install and Reset live behind the cogwheel next to it.
+- **Rotated, the hand climbs over the panel.** On a landscape phone the hint
+  panel owns the bottom of the screen, so while it is open the discard zone steps
+  aside and the cards move to the top, standing above it — you can still see the
+  card you picked lift and light up.
 - **Silent local persistence** — survives a reload, a tab switch or a phone lock.
 - **Works offline** and is installable as a PWA.
 
@@ -49,16 +64,23 @@ npm run preview # serve the production build locally
 ## Test
 
 ```bash
-npx playwright install chromium   # one-off, downloads the browser
-npm test                          # starts the dev server itself and runs both projects
-npm test -- --project=phone       # touch only
-npm test -- --headed --debug      # watch it happen / step through
-npm run test:report               # open the HTML report after a failure
+npx playwright install chromium        # one-off, downloads the browser
+npm test                               # starts the dev server itself, runs all three projects
+npm test -- --project=phone            # portrait touch only
+npm test -- --project=phone-landscape  # the same phone, rotated
+npm test -- --headed --debug           # watch it happen / step through
+npm run test:report                    # open the HTML report after a failure
 ```
 
 [Playwright](https://playwright.dev/) end-to-end tests in [`tests/`](./tests/), split
-into a **phone** project (Pixel 7 emulation, real touch input) and a **desktop**
-project (mouse).
+into **phone** (412×916) and **phone-landscape** (916×412) projects with real touch
+input, and a **desktop** project (mouse). Both phone viewports are pinned to 20:9,
+the ratio nearly every phone sold in the last few years has and the shape this app
+is actually held in — Playwright's own Pixel 7 descriptors are 2.04:1 and 2.4:1,
+and cards are sized against both axes, so the ratio is the part that decides the
+layout. Rotated, there is no room for the panel, the discard zone and the hand
+at once; how that squeeze is resolved — the zone stepping aside, the hand moving
+above the panel — is what [`tests/landscape/`](./tests/landscape/) holds down.
 
 The split is the point. Both bugs this app has actually shipped were browser
 behaviours that are invisible with a mouse on a desktop and that reading the code
@@ -79,5 +101,8 @@ linked; `vercel --prod` deploys from the CLI.
 ## Scope
 
 v1 is a **solo, per-player, offline** tool — one hand per device. Deliberately out
-of scope: multiplayer sync, negative hints, hands larger than 5, and the rainbow
-suit. See [`.planning/decisions.md`](./.planning/decisions.md) for the reasoning.
+of scope: multiplayer sync, hands larger than 5, and the rainbow suit. Negative
+hints were v1's first deferral and are now in, behind a switch (DEC-15). What
+stays out is deduction: four negatives on a card do not turn into the fifth
+colour for you. See [`.planning/decisions.md`](./.planning/decisions.md) for the
+reasoning.

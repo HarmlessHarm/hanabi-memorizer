@@ -25,6 +25,8 @@ happened, the superseded position is recorded rather than erased.
   treatment possible.
 - **Rejected**: negative marks — not dropped on principle, deferred. It's the
   first candidate for v2, and the data model should not make it hard to add.
+- **Superseded by DEC-15**: negatives are in, behind a switch. The bet held —
+  adding them cost one field pair on `Card` and one new pure module.
 
 ## DEC-3: Play and discard collapse into one action
 - **Context**: the prototype initially offered both.
@@ -113,6 +115,8 @@ happened, the superseded position is recorded rather than erased.
   alongside Reset and the hand-size toggle.
 - **Why**: a misdrag with a phone in one hand is common, and the alternative is
   reconstructing hints from memory — the exact failure the app exists to prevent.
+- **Amended by DEC-17**: only Undo kept its place in the header. Reset and the
+  hand-size toggle moved into the cogwheel menu — first-class, but not urgent.
 
 ## DEC-13: Solo per-player tool for v1
 - **Context**: an alternative shape exists where the hint *giver* taps the cards in
@@ -154,3 +158,114 @@ happened, the superseded position is recorded rather than erased.
   claim to solve. The mouse's tighter 8px drag threshold is gone: one `TAP_SLOP`
   of 12px now serves both, because the gesture must not start inside the tap
   window or a rolling fingertip lifts a card that then resolves as a tap.
+
+## DEC-15: Negative hints are derived, never entered
+- **Context**: DEC-2 deferred negatives. Advanced players do track them, and the
+  information is free — a hint that skips your card tells you what it isn't.
+- **Options considered**: a third pick row in the sheet for marking negatives by
+  hand; deriving them from the hints already being recorded.
+- **Chosen**: derived, from the selection a hint was given to. Off by default,
+  switched on in the settings menu.
+- **Why**: entering them by hand doubles the taps per hint and is exactly the
+  bookkeeping the app exists to remove. The player already tells the app which
+  cards a hint named; every other card in the hand follows from that.
+- **Consequence**: it only works if a hint can name several cards at once, which
+  is what pushed the hand to stay live under the open sheet (DEC-16).
+- **Amended by DEC-18**: they are derived when the sheet closes, not per tap.
+- **Not built**: deduction. Four negatives on a card do not become the fifth
+  colour. That is the part of the game the app protects, and it is the line
+  between recording what you were told and playing for you.
+
+## DEC-16: The hand stays tappable while the hint sheet is open
+- **Context**: hints name a set of cards, but the sheet's backdrop covered the
+  hand, so the selection was frozen at one card the moment the sheet opened.
+- **Chosen**: backdrop and sheet became separate layers with the card row
+  slotted between them — above the dimming, under the sheet. Tapping a card adds
+  or removes it from the selection; tapping anywhere else still closes.
+- **Why**: it keeps the two-taps-per-hint budget for a hint on four cards, and
+  the cards you are choosing between stay readable while you choose.
+- **Cost**: nothing on screen announces it, so a one-off tooltip fires on the
+  first card ever selected on the device (a localStorage flag, not part of the
+  hand state). And on a landscape phone the sheet covers the bottom of the
+  screen, which for a while left only the cards either side of it selectable —
+  **amended by DEC-20**: the hand now moves above the panel instead.
+- **Note**: DEC-14 froze card taps and drags while a sheet was open (`tappable`,
+  `enabled`), which this reverses; under DEC-14's press model cards stay live.
+
+## DEC-17: One cogwheel menu instead of a row of header controls
+- **Context**: hand size, anti-hints, Install and Reset had all accumulated in
+  the header, and anti-hints would have been the fifth control competing with the
+  cards for a phone's width.
+- **Chosen**: Undo stays in the header; everything else moved into a dropdown
+  behind a cogwheel.
+- **Why**: Undo is the only one reached for mid-turn, in a hurry. The rest are
+  set once a game or once ever, and the header is meant to be recessive.
+- **Note**: the menu dismisses on a document `pointerdown` outside itself rather
+  than behind a full-screen backdrop. A backdrop appearing under the finger
+  catches the phantom mouse click a touchscreen fires after every tap and closes
+  the menu the tap just opened — the bug the hint sheet shipped with once.
+
+## DEC-18: A hint is settled when the sheet closes, not on every tap
+- **Context**: deriving negatives on each pick meant a player who tapped 2, saw
+  it was wrong and tapped 3 left the rest of the hand knowing it wasn't a 2. The
+  hand had learned something from a mis-tap that was never a hint.
+- **Options considered**: an explicit Apply button; undoing the negatives on each
+  correction; deferring the derivation to the end of the sheet session.
+- **Chosen**: the sheet records which values it was shown, and works the
+  negatives out once on close — reading each value's final state back off the
+  cards, so one tapped on and off again settles to nothing.
+- **Why**: picking is not the same as having picked. Nothing else in the app
+  needs a commit step, and adding an Apply button would have cost the
+  two-taps-per-hint budget for the sake of a mis-tap.
+- **Consequence**: the settle deliberately skips the undo stack, so one Undo
+  takes back the hint tap *and* the negatives it implied, rather than leaving the
+  hand knowing things about a hint that no longer exists.
+- **Known gap**: a hint whose last card is discarded before the sheet closes
+  never settles. The card it was about is gone; the negatives it would have left
+  are not worth a special case.
+
+## DEC-19: A derived negative can be taken back off, from the sheet
+- **Context**: negatives are only as true as the hint they came from. A card
+  tapped into the selection by mistake, or one left out of it, leaves the rest of
+  the hand marked with something it was never told — and it is usually noticed
+  several hints later, long past what Undo can reach.
+- **Options considered**: tapping the badge on the card itself; a long-press on
+  the card; offering the selection's negatives back inside the hint sheet.
+- **Chosen**: the sheet grows a "Ruled out" row when the selection carries any
+  negatives — the same struck disc as on the card, on a 40px target, and tapping
+  one clears it from every selected card.
+- **Why**: the card is already spoken for by tap-to-select and drag-to-reorder,
+  and a badge is a few millimetres wide in the middle of that gesture. The sheet
+  is where a hint is corrected already (REQ-2.4), so the correction to what a
+  hint implied belongs beside it. It also inherits multi-select for free: one tap
+  fixes the same wrong negative across four cards.
+- **Consequence**: it is a commit, unlike the settle (DEC-18) — a removal is an
+  action taken on purpose, so it stands on the undo stack in its own right.
+  Removing a negative settles nothing: what a card is *not* says nothing about
+  the rest of the hand.
+- **Note**: the row mirrors the card face, so a negative hidden under a positive
+  on its own card is not offered either. The record survives underneath; if the
+  positive is taken off, the negative shows again.
+
+## DEC-20: In landscape, the hand climbs above the panel instead of hiding under it
+- **Context**: the hint panel had grown to where it covered the hand outright on
+  a rotated phone. Selecting a card animated it — a lift, a highlight ring —
+  behind the panel, so the feedback that a tap had landed was invisible.
+- **Options considered**: shrinking the cards while the panel is up; scrolling
+  the panel; moving the hand.
+- **Chosen**: while a card is selected on a short screen the discard zone gives
+  up its space and the row packs against the top of the stage, leaving every card
+  standing above the panel. OK moves up beside the heading there too, which buys
+  back another row of card.
+- **Why**: cards that resize on selection re-flow the drag metrics mid-gesture,
+  and a scrolling panel hides its own hints. Moving the row costs nothing but the
+  zone, which is only ever used at the *start* of a gesture — and no one drags a
+  card away while choosing what to tell it.
+- **Consequence**: the red drag-up-to-discard strip is off screen for as long as
+  the panel is up. The gesture still works — the threshold is a fraction of card
+  height, not a hit test on the zone — it just has no target drawn for it.
+- **Cost**: ~85px of each card shows at 916x412 with the panel at its tallest.
+  Enough for the lift, the ring and the top of a numeral; not the whole card.
+- **Follow-on**: the negatives moved from the bottom edge of the card to the top,
+  into that surviving strip. They are what you re-read while deciding which cards
+  a hint names, so they are exactly the thing that must not be behind the panel.

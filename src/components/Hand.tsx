@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { Card as CardModel, HandSize } from '../lib/types';
 import { computeMetrics } from '../lib/layout';
 import { useStageSize } from '../hooks/useStageSize';
@@ -9,7 +10,10 @@ import { PressButton } from './PressButton';
 interface Props {
   cards: CardModel[];
   handSize: HandSize;
-  selectedId: number | null;
+  selectedIds: number[];
+  showAntiHints: boolean;
+  /** the one-off "you can pick more than one" nudge, shown above the hand */
+  tip: boolean;
   onTap: (id: number) => void;
   onDiscard: (id: number) => void;
   onReorder: (from: number, to: number) => void;
@@ -21,7 +25,9 @@ interface Props {
 export function Hand({
   cards,
   handSize,
-  selectedId,
+  selectedIds,
+  showAntiHints,
+  tip,
   onTap,
   onDiscard,
   onReorder,
@@ -33,8 +39,6 @@ export function Hand({
   const drag = useHandDrag({
     cards,
     metrics,
-    // Freeze dragging while a sheet is open, so a modal tap can't start a drag.
-    enabled: selectedId === null,
     onReorder,
     onDiscard,
   });
@@ -43,11 +47,32 @@ export function Hand({
   const empty = Math.max(0, handSize - cards.length);
   const ready = box.w > 0;
 
+  // A hint can name several cards, so the hand has to stay reachable while the
+  // sheet is up: lift the row over the sheet's backdrop, but leave it under the
+  // sheet itself, which on a short screen sits across the bottom of the cards.
+  const rowStyle: CSSProperties = {
+    height: cardH,
+    visibility: ready ? 'visible' : 'hidden',
+    ...(selectedIds.length ? { position: 'relative', zIndex: 55 } : null),
+  };
+
+  // Landscape has no room for the discard zone, the hand and the sheet at once,
+  // so while a hint is being picked the stage drops the zone and packs the cards
+  // against its top edge, leaving them standing above the panel (DEC-20). In
+  // portrait the class is inert — the sheet clears the hand there already.
+  const picking = selectedIds.length > 0;
+
   return (
-    <main ref={stageRef} className="stage">
+    <main ref={stageRef} className={picking ? 'stage is-picking' : 'stage'}>
       <DiscardZone height={zoneH} active={drag.dragging} armed={drag.zoneArmed} />
 
-      <div className="row" style={{ height: cardH, visibility: ready ? 'visible' : 'hidden' }}>
+      <div className="row" style={rowStyle}>
+        {tip && (
+          <div className="tip" role="status">
+            Tap more cards to hint them together
+          </div>
+        )}
+
         {Array.from({ length: empty }).map((_, k) => (
           <PressButton
             key={`slot-${k}`}
@@ -62,8 +87,7 @@ export function Hand({
         ))}
 
         {cards.map((c, i) => {
-          const dimmed = selectedId !== null && c.id !== selectedId;
-          const focus = c.id === selectedId;
+          const selected = selectedIds.includes(c.id);
           return (
             <Card
               key={c.id}
@@ -73,9 +97,9 @@ export function Hand({
               cardH={cardH}
               drag={drag}
               transform={drag.transformFor(i)}
-              dimmed={dimmed}
-              focus={focus}
-              tappable={selectedId === null}
+              dimmed={selectedIds.length > 0 && !selected}
+              focus={selected}
+              showAntiHints={showAntiHints}
               onTap={onTap}
             />
           );

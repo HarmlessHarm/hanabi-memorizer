@@ -16,7 +16,6 @@ interface DragState {
 interface Params {
   cards: Card[];
   metrics: Metrics;
-  enabled: boolean;
   onReorder: (from: number, to: number) => void;
   onDiscard: (id: number) => void;
 }
@@ -47,7 +46,6 @@ export interface HandDragApi {
 export function useHandDrag({
   cards,
   metrics,
-  enabled,
   onReorder,
   onDiscard,
 }: Params): HandDragApi {
@@ -99,7 +97,6 @@ export function useHandDrag({
       else if (to !== i) finishReorder(i, to);
     },
     {
-      enabled,
       // Matched on purpose: the drag must not start inside the tap window, or a
       // fingertip rolling a few px would lift the card and then resolve as a tap
       // the drag handler has already discarded.

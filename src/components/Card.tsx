@@ -5,6 +5,7 @@ import { mergeProps } from '@react-aria/utils';
 import type { Card as CardModel, Rank } from '../lib/types';
 import { cardBackground, suitOf } from '../lib/suits';
 import type { HandDragApi } from '../hooks/useHandDrag';
+import { AntiHints } from './AntiHints';
 import { Burst } from './Burst';
 
 interface Props {
@@ -17,8 +18,8 @@ interface Props {
   transform: CSSProperties;
   dimmed: boolean;
   focus: boolean;
-  /** taps are frozen while a sheet is open, so a modal tap can't reach a card */
-  tappable: boolean;
+  /** negatives are recorded whether or not they are shown; this is the setting */
+  showAntiHints: boolean;
   onTap: (id: number) => void;
 }
 
@@ -70,7 +71,7 @@ export function Card({
   transform,
   dimmed,
   focus,
-  tappable,
+  showAntiHints,
   onTap,
 }: Props) {
   const suit = suitOf(card.suit);
@@ -82,7 +83,6 @@ export function Card({
   // browser's emulated-mouse replay after a tap is handled by the hook rather
   // than by cancelling touchend by hand.
   const { pressProps } = usePress({
-    isDisabled: !tappable,
     onPressStart: drag.pressStarted,
     onPress: () => {
       // A drag ends over the card it moved; only a gesture that stayed put is a tap.
@@ -95,7 +95,9 @@ export function Card({
     height: cardH,
     borderRadius: Math.round(cardH * 0.09),
     background: cardBackground(suit),
-    opacity: dimmed ? 0.3 : 1,
+    // Unpicked cards recede but stay readable and tappable: they are the ones
+    // you reach for to add a second card to the hint.
+    opacity: dimmed ? 0.55 : 1,
     marginTop: focus ? -12 : 0,
     boxShadow: focus
       ? '0 18px 34px rgba(0,0,0,.6), 0 0 0 2px #e7ecf2'
@@ -106,7 +108,7 @@ export function Card({
     <div
       className="card"
       role="button"
-      tabIndex={tappable ? 0 : -1}
+      tabIndex={0}
       aria-label={describe(card, index)}
       style={style}
       {...mergeProps(pressProps, drag.bindCard(index))}
@@ -127,6 +129,15 @@ export function Card({
         >
           {card.rank}
         </span>
+      )}
+
+      {/* Once a card knows its number, "not a 2" is noise — same for its colour. */}
+      {showAntiHints && (
+        <AntiHints
+          ranks={card.rank ? [] : card.notRanks}
+          suits={card.suit ? [] : card.notSuits}
+          size={Math.min(Math.round(cardW * 0.2), 26)}
+        />
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openApp } from '../helpers/app';
+import { centreOf, openApp } from '../helpers/app';
 
 /**
  * The mouse path was never broken — it is here so that a future fix aimed at
@@ -16,9 +16,10 @@ test.describe('with a mouse', () => {
 
   test('clicking the backdrop closes it', async ({ page }) => {
     await page.locator('.card').first().click();
-    const sheet = await page.locator('.sheet').boundingBox();
 
-    await page.mouse.click(page.viewportSize()!.width / 2, sheet!.y - 150);
+    // Away from the hand — the cards stay live while the sheet is open.
+    const zone = await centreOf(page, '.zone');
+    await page.mouse.click(zone.x, zone.y);
 
     await expect(page.locator('.sheet')).toHaveCount(0);
   });
