@@ -364,6 +364,14 @@ button:focus-visible {
     margin-top 160ms ease, box-shadow 200ms ease;
 }
 
+/* A drag captures the pointer on whatever it started on. If that is the numeral,
+   the pop remounts it mid-drag, the capture goes with it, and the rest of the
+   gesture lands on whichever card is under the finger. Only the card itself is
+   a target, so it is the card that holds the capture. */
+.card * {
+  pointer-events: none;
+}
+
 .rank {
   position: absolute;
   left: 50%;
@@ -381,7 +389,7 @@ button:focus-visible {
 /* What the card is not: a row of struck-through discs along the top edge,
    wrapping to a second row rather than shrinking below legibility.
    The top edge, because that is the strip of card that stays on screen — above
-   the hint panel in landscape (DEC-19), and above the card in front of it if the
+   the hint panel in landscape (DEC-20), and above the card in front of it if the
    hand is ever fanned. What a card is *not* is exactly what you re-read while
    choosing which cards a hint names, so it has to survive the panel being up. */
 .antis {
@@ -738,7 +746,7 @@ button:focus-visible {
    * a hand centred in what remains disappears behind the panel entirely. So the
    * zone steps aside and the row moves to the top of the stage, where the cards
    * stand above the panel: enough of each one shows for the selected card's lift
-   * and its highlight ring to be visible while it is being hinted (DEC-19).
+   * and its highlight ring to be visible while it is being hinted (DEC-20).
    * Dragging up to discard still works — only the red zone is out of the way.
    */
   .stage.is-picking {

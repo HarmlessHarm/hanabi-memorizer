@@ -37,7 +37,7 @@ export const allHave = (cards: Card[], field: HintField, value: Rank | SuitKey):
   cards.length > 0 && cards.every((c) => c[field] === value);
 
 /**
- * Negative hints (REQ-2.5, DEC-14).
+ * Negative hints (REQ-2.5, DEC-15).
  *
  * A hint at the table is given to a whole hand at once — "these two are red" —
  * which is also a statement about every card it skipped. This is the one place
@@ -47,7 +47,7 @@ export const allHave = (cards: Card[], field: HintField, value: Rank | SuitKey):
  * It runs once, when the player is done picking, on the values they touched
  * while the sheet was open — never on each tap. Tapping 2 and then 3 because the
  * first was a mis-tap is one hint, not two, and the rest of the hand must not end
- * up knowing it isn't a 2 (DEC-17). Which way each value lands is read back off
+ * up knowing it isn't a 2 (DEC-18). Which way each value lands is read back off
  * the cards at that moment, so a value tapped on and off again settles to
  * nothing, and one taken off a card it was already on lifts the matching
  * negative from the others.

@@ -77,7 +77,7 @@ for feel, not a codebase to port; the real app is a fresh project. [ref: DEC-1]
   - **REQ-2.6** (MUST): Remove a negative hint from a card. Negatives are derived
     from a selection, so a mis-tapped or incomplete selection leaves the hand
     holding something it was never told — usually noticed long past what Undo
-    reaches. [ref: DEC-18]
+    reaches. [ref: DEC-19]
 - **REQ-3** (MUST): Manage the hand as the game progresses.
   - **REQ-3.1** (MUST): Reorder cards by dragging horizontally; neighbours move out
     of the way and the new order persists. [ref: DEC-9, DEC-10]

@@ -1,6 +1,7 @@
 import type { Card, Rank, SuitKey } from '../lib/types';
 import { RANKS, SUITS, suitOf } from '../lib/suits';
 import { AntiBadge, RANK_FILL, notLabel } from './AntiHints';
+import { PressButton } from './PressButton';
 import { Sheet } from './Sheet';
 
 interface Props {
@@ -67,9 +68,9 @@ export function HintSheet({
       {/* The sheet closes itself on a tap outside, but a hint tap lands close to
           the sheet edge, so the deliberate way out gets a big centred target
           sitting above the hints — within thumb reach, hard to miss. */}
-      <button className="sheet-ok" onClick={onClose}>
+      <PressButton className="sheet-ok" onPress={onClose}>
         OK
-      </button>
+      </PressButton>
 
       <div className="groups">
         <div className="group">
@@ -78,14 +79,14 @@ export function HintSheet({
             {RANKS.map((n) => {
               const h = held(cards.map((c) => c.rank === n));
               return (
-                <button
+                <PressButton
                   key={n}
                   className={`pick${h === 'all' ? ' is-on' : h === 'some' ? ' is-part' : ''}`}
                   aria-pressed={pressed(h)}
-                  onClick={() => onToggle('rank', n)}
+                  onPress={() => onToggle('rank', n)}
                 >
                   {n}
-                </button>
+                </PressButton>
               );
             })}
           </div>
@@ -97,12 +98,12 @@ export function HintSheet({
             {SUITS.map((s) => {
               const h = held(cards.map((c) => c.suit === s.key));
               return (
-                <button
+                <PressButton
                   key={s.key}
                   className="swatch"
                   aria-label={s.label}
                   aria-pressed={pressed(h)}
-                  onClick={() => onToggle('suit', s.key)}
+                  onPress={() => onToggle('suit', s.key)}
                   style={{
                     background: s.hex,
                     color: s.ink,
@@ -115,7 +116,7 @@ export function HintSheet({
                   }}
                 >
                   {h === 'all' ? '✓' : h === 'some' ? '–' : ''}
-                </button>
+                </PressButton>
               );
             })}
           </div>
@@ -129,27 +130,27 @@ export function HintSheet({
             <div className="group-label">Ruled out · tap to remove</div>
             <div className="anti-row">
               {ruledRanks.map((r) => (
-                <button
+                <PressButton
                   key={`r${r}`}
                   className="anti-chip"
                   aria-label={`Remove ${notLabel('rank', r)}`}
-                  onClick={() => onClearNegative('rank', r)}
+                  onPress={() => onClearNegative('rank', r)}
                 >
                   <AntiBadge size={22} fill={RANK_FILL}>
                     {r}
                   </AntiBadge>
-                </button>
+                </PressButton>
               ))}
 
               {ruledSuits.map((s) => (
-                <button
+                <PressButton
                   key={`s${s.key}`}
                   className="anti-chip"
                   aria-label={`Remove ${notLabel('suit', s.key)}`}
-                  onClick={() => onClearNegative('suit', s.key)}
+                  onPress={() => onClearNegative('suit', s.key)}
                 >
                   <AntiBadge size={22} fill={s.hex} />
-                </button>
+                </PressButton>
               ))}
             </div>
           </div>

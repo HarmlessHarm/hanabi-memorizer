@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
+import { PressButton } from './PressButton';
 import { Sheet } from './Sheet';
 
 // A settings-menu row that only appears when the app can actually be installed
@@ -11,14 +12,14 @@ export function InstallControl() {
 
   if (installed || (!canPrompt && !iosHint)) return null;
 
-  const onClick = () => {
+  const onPress = () => {
     if (canPrompt) void promptInstall();
     else setShowIos(true);
   };
 
   return (
     <>
-      <button className="menu-item" onClick={onClick}>
+      <PressButton className="menu-item" onPress={onPress}>
         <svg className="install-glyph" viewBox="0 0 24 24" aria-hidden="true">
           <path
             d="M12 3v10m0 0 4-4m-4 4-4-4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"
@@ -30,7 +31,7 @@ export function InstallControl() {
           />
         </svg>
         Install app
-      </button>
+      </PressButton>
 
       {showIos && (
         <Sheet variant="chooser" onDismiss={() => setShowIos(false)}>
@@ -40,9 +41,9 @@ export function InstallControl() {
             <b>Add to Home Screen</b>. Hanabi opens full-screen and works offline.
           </p>
           <div className="actions">
-            <button className="action action-ghost" onClick={() => setShowIos(false)}>
+            <PressButton className="action action-ghost" onPress={() => setShowIos(false)}>
               Got it
-            </button>
+            </PressButton>
           </div>
         </Sheet>
       )}

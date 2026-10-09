@@ -102,7 +102,7 @@ linked; `vercel --prod` deploys from the CLI.
 
 v1 is a **solo, per-player, offline** tool — one hand per device. Deliberately out
 of scope: multiplayer sync, hands larger than 5, and the rainbow suit. Negative
-hints were v1's first deferral and are now in, behind a switch (DEC-14). What
+hints were v1's first deferral and are now in, behind a switch (DEC-15). What
 stays out is deduction: four negatives on a card do not turn into the fifth
 colour for you. See [`.planning/decisions.md`](./.planning/decisions.md) for the
 reasoning.

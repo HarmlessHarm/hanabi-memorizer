@@ -25,7 +25,7 @@ happened, the superseded position is recorded rather than erased.
   treatment possible.
 - **Rejected**: negative marks — not dropped on principle, deferred. It's the
   first candidate for v2, and the data model should not make it hard to add.
-- **Superseded by DEC-14**: negatives are in, behind a switch. The bet held —
+- **Superseded by DEC-15**: negatives are in, behind a switch. The bet held —
   adding them cost one field pair on `Card` and one new pure module.
 
 ## DEC-3: Play and discard collapse into one action
@@ -115,7 +115,7 @@ happened, the superseded position is recorded rather than erased.
   alongside Reset and the hand-size toggle.
 - **Why**: a misdrag with a phone in one hand is common, and the alternative is
   reconstructing hints from memory — the exact failure the app exists to prevent.
-- **Amended by DEC-16**: only Undo kept its place in the header. Reset and the
+- **Amended by DEC-17**: only Undo kept its place in the header. Reset and the
   hand-size toggle moved into the cogwheel menu — first-class, but not urgent.
 
 ## DEC-13: Solo per-player tool for v1
@@ -127,7 +127,39 @@ happened, the superseded position is recorded rather than erased.
 - **Note**: this is the fork that most changes the project. It was raised and
   deliberately deferred, not settled — see the open questions.
 
-## DEC-14: Negative hints are derived, never entered
+## DEC-14: One press model, from libraries, for every control
+- **Context**: the app had grown two ways of answering a finger. Cards ran on
+  hand-rolled `pointerdown/move/up` and acted on `pointerup`; every button ran on
+  a plain `onClick`. Acting before the browser's click is what created the
+  phantom-click bug — the tap opened a sheet, and the click that followed landed
+  on the sheet's own backdrop and closed it — which cost `Sheet.tsx` a gating
+  ref and `useHandDrag` a `touchend` `preventDefault`, one fix each, neither
+  helping the other.
+- **Options considered**: keep hand-rolling and patch per control; `usePress`
+  from `@react-aria/interactions`; `@use-gesture/react`; `dnd-kit`;
+  `framer-motion`'s `Reorder`.
+- **Chosen**: `usePress` for every tap — cards, draw slots, header chips, hint
+  picks, swatches, sheet buttons — and `@use-gesture/react`'s `useDrag` for the
+  reorder/discard gesture. `dnd-kit` was rejected as oversized for a five-item
+  row and unsettled (core last published Dec 2024, docs archived Feb 2026,
+  successor still 0.x); `framer-motion` doesn't fit one gesture that is both a
+  sideways reorder and a drag up to discard.
+- **Why**: `usePress` resolves on the browser's real click, with a synthetic one
+  ~80ms after release when the browser skips it (iOS and Android do after a long
+  press). So the card behaves exactly like the buttons beside it, the phantom
+  click has nothing left to break — verified by deleting the `Sheet.tsx` gate and
+  watching the regression tests still pass — and a slow press and a quick tap do
+  the same thing. It also carries keyboard and screen-reader activation, which is
+  how the card stopped being a `<div>` no one but a mouse or a finger could use.
+- **Cost**: +12.6 kB gzipped (51.2 → 63.8), about a quarter of the bundle.
+- **Note**: this reverses DEC-9's "rejected: a drag library" and settles DEC-10's
+  note that the reorder probably shouldn't be hand-rolled. The settle frame in
+  DEC-10 stays — it is a layout-vs-transform conflict, which `useDrag` does not
+  claim to solve. The mouse's tighter 8px drag threshold is gone: one `TAP_SLOP`
+  of 12px now serves both, because the gesture must not start inside the tap
+  window or a rolling fingertip lifts a card that then resolves as a tap.
+
+## DEC-15: Negative hints are derived, never entered
 - **Context**: DEC-2 deferred negatives. Advanced players do track them, and the
   information is free — a hint that skips your card tells you what it isn't.
 - **Options considered**: a third pick row in the sheet for marking negatives by
@@ -138,13 +170,13 @@ happened, the superseded position is recorded rather than erased.
   bookkeeping the app exists to remove. The player already tells the app which
   cards a hint named; every other card in the hand follows from that.
 - **Consequence**: it only works if a hint can name several cards at once, which
-  is what pushed the hand to stay live under the open sheet (DEC-15).
-- **Amended by DEC-17**: they are derived when the sheet closes, not per tap.
+  is what pushed the hand to stay live under the open sheet (DEC-16).
+- **Amended by DEC-18**: they are derived when the sheet closes, not per tap.
 - **Not built**: deduction. Four negatives on a card do not become the fifth
   colour. That is the part of the game the app protects, and it is the line
   between recording what you were told and playing for you.
 
-## DEC-15: The hand stays tappable while the hint sheet is open
+## DEC-16: The hand stays tappable while the hint sheet is open
 - **Context**: hints name a set of cards, but the sheet's backdrop covered the
   hand, so the selection was frozen at one card the moment the sheet opened.
 - **Chosen**: backdrop and sheet became separate layers with the card row
@@ -156,9 +188,11 @@ happened, the superseded position is recorded rather than erased.
   first card ever selected on the device (a localStorage flag, not part of the
   hand state). And on a landscape phone the sheet covers the bottom of the
   screen, which for a while left only the cards either side of it selectable —
-  **amended by DEC-19**: the hand now moves above the panel instead.
+  **amended by DEC-20**: the hand now moves above the panel instead.
+- **Note**: DEC-14 froze card taps and drags while a sheet was open (`tappable`,
+  `enabled`), which this reverses; under DEC-14's press model cards stay live.
 
-## DEC-16: One cogwheel menu instead of a row of header controls
+## DEC-17: One cogwheel menu instead of a row of header controls
 - **Context**: hand size, anti-hints, Install and Reset had all accumulated in
   the header, and anti-hints would have been the fifth control competing with the
   cards for a phone's width.
@@ -171,7 +205,7 @@ happened, the superseded position is recorded rather than erased.
   catches the phantom mouse click a touchscreen fires after every tap and closes
   the menu the tap just opened — the bug the hint sheet shipped with once.
 
-## DEC-17: A hint is settled when the sheet closes, not on every tap
+## DEC-18: A hint is settled when the sheet closes, not on every tap
 - **Context**: deriving negatives on each pick meant a player who tapped 2, saw
   it was wrong and tapped 3 left the rest of the hand knowing it wasn't a 2. The
   hand had learned something from a mis-tap that was never a hint.
@@ -190,7 +224,7 @@ happened, the superseded position is recorded rather than erased.
   never settles. The card it was about is gone; the negatives it would have left
   are not worth a special case.
 
-## DEC-18: A derived negative can be taken back off, from the sheet
+## DEC-19: A derived negative can be taken back off, from the sheet
 - **Context**: negatives are only as true as the hint they came from. A card
   tapped into the selection by mistake, or one left out of it, leaves the rest of
   the hand marked with something it was never told — and it is usually noticed
@@ -205,7 +239,7 @@ happened, the superseded position is recorded rather than erased.
   is where a hint is corrected already (REQ-2.4), so the correction to what a
   hint implied belongs beside it. It also inherits multi-select for free: one tap
   fixes the same wrong negative across four cards.
-- **Consequence**: it is a commit, unlike the settle (DEC-17) — a removal is an
+- **Consequence**: it is a commit, unlike the settle (DEC-18) — a removal is an
   action taken on purpose, so it stands on the undo stack in its own right.
   Removing a negative settles nothing: what a card is *not* says nothing about
   the rest of the hand.
@@ -213,7 +247,7 @@ happened, the superseded position is recorded rather than erased.
   on its own card is not offered either. The record survives underneath; if the
   positive is taken off, the negative shows again.
 
-## DEC-19: In landscape, the hand climbs above the panel instead of hiding under it
+## DEC-20: In landscape, the hand climbs above the panel instead of hiding under it
 - **Context**: the hint panel had grown to where it covered the hand outright on
   a rotated phone. Selecting a card animated it — a lift, a highlight ring —
   behind the panel, so the feedback that a tap had landed was invisible.
@@ -235,4 +269,3 @@ happened, the superseded position is recorded rather than erased.
 - **Follow-on**: the negatives moved from the bottom edge of the card to the top,
   into that surviving strip. They are what you re-read while deciding which cards
   a hint names, so they are exactly the thing that must not be behind the panel.
-

@@ -1,4 +1,5 @@
 import type { HandSize } from '../lib/types';
+import { PressButton } from './PressButton';
 import { SettingsMenu } from './SettingsMenu';
 
 interface Props {
@@ -31,9 +32,9 @@ export function Header({
         <span className="subtitle">hints on the back</span>
       </div>
       <div className="controls">
-        <button className="chip" onClick={onUndo} disabled={!canUndo}>
+        <PressButton className="chip" onPress={onUndo} disabled={!canUndo}>
           Undo
-        </button>
+        </PressButton>
         <SettingsMenu
           handSize={handSize}
           antiHints={antiHints}

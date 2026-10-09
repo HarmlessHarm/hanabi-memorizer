@@ -5,6 +5,7 @@ import { useStageSize } from '../hooks/useStageSize';
 import { useHandDrag } from '../hooks/useHandDrag';
 import { Card } from './Card';
 import { DiscardZone } from './DiscardZone';
+import { PressButton } from './PressButton';
 
 interface Props {
   cards: CardModel[];
@@ -38,7 +39,6 @@ export function Hand({
   const drag = useHandDrag({
     cards,
     metrics,
-    onTap,
     onReorder,
     onDiscard,
   });
@@ -58,7 +58,7 @@ export function Hand({
 
   // Landscape has no room for the discard zone, the hand and the sheet at once,
   // so while a hint is being picked the stage drops the zone and packs the cards
-  // against its top edge, leaving them standing above the panel (DEC-19). In
+  // against its top edge, leaving them standing above the panel (DEC-20). In
   // portrait the class is inert — the sheet clears the hand there already.
   const picking = selectedIds.length > 0;
 
@@ -74,16 +74,16 @@ export function Hand({
         )}
 
         {Array.from({ length: empty }).map((_, k) => (
-          <button
+          <PressButton
             key={`slot-${k}`}
             className="slot"
             style={{ width: cardW, height: cardH }}
-            onClick={onDraw}
+            onPress={onDraw}
             aria-label="Draw a card"
           >
             <span style={{ fontSize: cardH * 0.2, lineHeight: 1 }}>+</span>
             <span className="slot-label">Draw</span>
-          </button>
+          </PressButton>
         ))}
 
         {cards.map((c, i) => {
@@ -92,13 +92,15 @@ export function Hand({
             <Card
               key={c.id}
               card={c}
+              index={i}
               cardW={cardW}
               cardH={cardH}
-              pointerProps={drag.getCardProps(i)}
+              drag={drag}
               transform={drag.transformFor(i)}
               dimmed={selectedIds.length > 0 && !selected}
               focus={selected}
               showAntiHints={showAntiHints}
+              onTap={onTap}
             />
           );
         })}
